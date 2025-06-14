@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Copy } from "lucide-react";
-import { SearchParameters } from "@/pages/LeadAgent";
+import { SearchParameters } from "@/types/leadAgent";
 import { useState } from "react";
 
 interface ApolloSearchPreviewProps {

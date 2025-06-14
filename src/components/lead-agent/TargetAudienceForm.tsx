@@ -1,9 +1,8 @@
-
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TargetAudience } from "@/pages/LeadAgent";
+import { TargetAudience } from "@/types/leadAgent";
 
 interface TargetAudienceFormProps {
   targetAudience: TargetAudience;

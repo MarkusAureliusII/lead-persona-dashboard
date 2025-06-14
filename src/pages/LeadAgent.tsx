@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -9,11 +8,7 @@ import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
 import { ProcessControls } from "@/components/lead-agent/ProcessControls";
 import { ProcessingDashboard } from "@/components/lead-agent/ProcessingDashboard";
 import { useToast } from "@/hooks/use-toast";
-
-export interface PersonalizationConfig {
-  productService: string;
-  tonality: string;
-}
+import { PersonalizationConfig } from "@/types/leadAgent";
 
 const LeadAgent = () => {
   const { toast } = useToast();

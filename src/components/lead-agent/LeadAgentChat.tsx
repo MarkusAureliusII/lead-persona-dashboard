@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bot, User, Send, AlertCircle, Settings, Bug } from "lucide-react";
 import { useState } from "react";
-import { TargetAudience, SearchParameters } from "@/pages/LeadAgent";
+import { TargetAudience, SearchParameters } from "@/types/leadAgent";
 import { N8nService } from "@/services/n8nService";
 import { useToast } from "@/hooks/use-toast";
 
