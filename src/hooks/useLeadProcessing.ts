@@ -1,120 +1,17 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { N8nService } from '@/services/n8n';
 import { PersonalizationConfig } from '@/types/leadAgent';
 import { ProcessingResult } from '@/types/processing';
 import { useCsvUpload } from '@/hooks/useCsvUpload';
+import { LeadProcessingService } from '@/services/leadProcessing';
+import { ProcessingResultsManager } from '@/utils/processingResults';
 
 export function useLeadProcessing() {
   const { toast } = useToast();
   const { updateLeadProcessingResult } = useCsvUpload();
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingResults, setProcessingResults] = useState<ProcessingResult[]>([]);
-
-  const processLead = async (
-    leadData: any, 
-    index: number, 
-    personalizationConfig: PersonalizationConfig,
-    webhookUrl: string,
-    csvUploadId: string | null
-  ): Promise<ProcessingResult> => {
-    console.log(`🔄 Processing lead ${index + 1}:`, leadData);
-    
-    // Update status to processing in database
-    if (csvUploadId) {
-      await updateLeadProcessingResult(csvUploadId, index, 'processing');
-    }
-    
-    const n8nService = new N8nService(webhookUrl);
-    const requestPayload = {
-      message: `Please create a personalized outreach message for this lead using the following context:
-      
-Product/Service: ${personalizationConfig.productService}
-Desired Tone: ${personalizationConfig.tonality}
-
-Lead Information:
-${Object.entries(leadData).map(([key, value]) => `${key}: ${value}`).join('\n')}
-
-Please generate a personalized message that addresses this specific lead's context and follows the specified tone.`,
-      targetAudience: {
-        industry: leadData.industry || leadData.companyName || "Unknown",
-        companySize: leadData.companySize || "Unknown", 
-        jobTitle: leadData.jobTitle || leadData.title || "Unknown",
-        location: leadData.location || leadData.city || "Unknown",
-        techStack: leadData.techStack || leadData.technology
-      },
-      timestamp: new Date().toISOString(),
-      leadData: leadData
-    };
-
-    try {
-      const response = await n8nService.sendMessage(requestPayload);
-      
-      if (response.success) {
-        const result = {
-          index,
-          leadData,
-          status: 'success' as const,
-          result: response,
-          personalizedMessage: response.aiResponse || response.message
-        };
-
-        // Update success status in database
-        if (csvUploadId) {
-          await updateLeadProcessingResult(
-            csvUploadId, 
-            index, 
-            'success', 
-            result.personalizedMessage
-          );
-        }
-
-        return result;
-      } else {
-        const result = {
-          index,
-          leadData,
-          status: 'error' as const,
-          error: response.error || 'Processing failed'
-        };
-
-        // Update error status in database
-        if (csvUploadId) {
-          await updateLeadProcessingResult(
-            csvUploadId, 
-            index, 
-            'error', 
-            undefined, 
-            result.error
-          );
-        }
-
-        return result;
-      }
-    } catch (error) {
-      console.error(`❌ Error processing lead ${index + 1}:`, error);
-      const result = {
-        index,
-        leadData,
-        status: 'error' as const,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-
-      // Update error status in database
-      if (csvUploadId) {
-        await updateLeadProcessingResult(
-          csvUploadId, 
-          index, 
-          'error', 
-          undefined, 
-          result.error
-        );
-      }
-
-      return result;
-    }
-  };
 
   const startProcessing = async (
     csvData: any[],
@@ -158,11 +55,7 @@ Please generate a personalized message that addresses this specific lead's conte
     setIsProcessing(true);
     
     // Initialize processing results
-    const initialResults: ProcessingResult[] = csvData.map((leadData, index) => ({
-      index,
-      leadData,
-      status: 'pending'
-    }));
+    const initialResults = ProcessingResultsManager.initializeResults(csvData);
     setProcessingResults(initialResults);
 
     toast({
@@ -175,17 +68,24 @@ Please generate a personalized message that addresses this specific lead's conte
       console.log(`📤 Processing lead ${i + 1}/${csvData.length}`);
       
       // Update status to processing
-      setProcessingResults(prev => prev.map(result => 
-        result.index === i ? { ...result, status: 'processing' } : result
-      ));
+      setProcessingResults(prev => 
+        ProcessingResultsManager.updateResultStatus(prev, i, 'processing')
+      );
 
       try {
-        const result = await processLead(csvData[i], i, personalizationConfig, webhookUrl, csvUploadId);
+        const result = await LeadProcessingService.processLead(
+          csvData[i], 
+          i, 
+          personalizationConfig, 
+          webhookUrl, 
+          csvUploadId,
+          updateLeadProcessingResult
+        );
         
         // Update with result
-        setProcessingResults(prev => prev.map(existingResult => 
-          existingResult.index === i ? result : existingResult
-        ));
+        setProcessingResults(prev => 
+          ProcessingResultsManager.updateResultWithData(prev, result)
+        );
 
         // Small delay between requests to be respectful to the webhook
         if (i < csvData.length - 1) {
@@ -193,16 +93,15 @@ Please generate a personalized message that addresses this specific lead's conte
         }
       } catch (error) {
         console.error(`Error processing lead ${i + 1}:`, error);
-        setProcessingResults(prev => prev.map(result => 
-          result.index === i ? { ...result, status: 'error', error: 'Processing failed' } : result
-        ));
+        setProcessingResults(prev => 
+          ProcessingResultsManager.updateResultStatus(prev, i, 'error')
+        );
       }
     }
 
     setIsProcessing(false);
     
-    const successCount = processingResults.filter(r => r.status === 'success').length;
-    const errorCount = processingResults.filter(r => r.status === 'error').length;
+    const { successCount, errorCount } = ProcessingResultsManager.getProcessingStats(processingResults);
     
     toast({
       title: "Processing Complete",
