@@ -1,11 +1,11 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { TargetAudienceForm } from "@/components/lead-agent/TargetAudienceForm";
 import { LeadAgentChat } from "@/components/lead-agent/LeadAgentChat";
-import { ApolloSearchPreview } from "@/components/lead-agent/ApolloSearchPreview";
-import { SearchConfiguration } from "@/components/lead-agent/SearchConfiguration";
 import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
+import { MailingListIntegration } from "@/components/lead-agent/MailingListIntegration";
 import { useState } from "react";
 
 export interface TargetAudience {
@@ -35,11 +35,7 @@ const LeadAgent = () => {
   });
 
   const [searchParameters, setSearchParameters] = useState<SearchParameters>({});
-  const [searchConfig, setSearchConfig] = useState({
-    maxLeads: 100,
-    qualityFilter: "high",
-    exportFormat: "csv"
-  });
+  const [mailingConfig, setMailingConfig] = useState({});
 
   const [webhookUrl, setWebhookUrl] = useState(() => {
     return localStorage.getItem("n8n-webhook-url") || "";
@@ -59,41 +55,36 @@ const LeadAgent = () => {
           <main className="flex-1 p-6">
             <div className="container mx-auto max-w-7xl">
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Lead Agent</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Lead Scraping & Personalization</h1>
                 <p className="text-gray-600">
-                  Definieren Sie Ihre Zielgruppe und lassen Sie unseren AI-Agent die perfekten Suchparameter erstellen.
+                  Describe your ideal customers to our AI agent. It will scrape leads, create personalized messages, and add them to your mailing lists.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Linke Spalte */}
+                {/* Left Column - Configuration */}
                 <div className="space-y-8">
                   <TargetAudienceForm 
                     targetAudience={targetAudience}
                     onUpdate={setTargetAudience}
                   />
                   
+                  <MailingListIntegration 
+                    onConfigChange={setMailingConfig}
+                  />
+                  
                   <N8nConfiguration 
                     webhookUrl={webhookUrl}
                     onWebhookUrlChange={handleWebhookUrlChange}
                   />
-                  
+                </div>
+
+                {/* Right Column - AI Chat */}
+                <div className="space-y-8">
                   <LeadAgentChat 
                     onParametersGenerated={setSearchParameters}
                     targetAudience={targetAudience}
                     webhookUrl={webhookUrl}
-                  />
-                </div>
-
-                {/* Rechte Spalte */}
-                <div className="space-y-8">
-                  <ApolloSearchPreview 
-                    searchParameters={searchParameters}
-                  />
-                  
-                  <SearchConfiguration 
-                    config={searchConfig}
-                    onConfigChange={setSearchConfig}
                   />
                 </div>
               </div>

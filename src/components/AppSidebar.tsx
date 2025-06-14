@@ -1,12 +1,9 @@
 
 import {
   BarChart3,
-  Upload,
   Bot,
-  Mail,
   Settings,
-  Home,
-  Users
+  Home
 } from "lucide-react";
 
 import {
@@ -28,28 +25,18 @@ const menuItems = [
     isActive: true,
   },
   {
-    title: "Lead Agent",
+    title: "Lead Scraping",
     url: "/lead-agent",
-    icon: Users,
-  },
-  {
-    title: "Leads importieren",
-    url: "#",
-    icon: Upload,
-  },
-  {
-    title: "KI-Agent starten",
-    url: "#",
     icon: Bot,
   },
   {
-    title: "Personalisierte E-Mails",
-    url: "#",
-    icon: Mail,
+    title: "Statistics",
+    url: "/statistics",
+    icon: BarChart3,
   },
   {
-    title: "Einstellungen",
-    url: "#",
+    title: "Settings",
+    url: "/settings",
     icon: Settings,
   },
 ];
