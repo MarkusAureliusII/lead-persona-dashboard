@@ -87,16 +87,21 @@ export class N8nService {
         rawData = await response.json();
         console.log("📥 Parsed JSON response:", rawData);
         return this.parseJsonResponse(rawData, requestId, responseType);
-      } else if (contentType.includes('text/html')) {
-        responseType = 'html';
-        rawData = await response.text();
-        console.log("📥 Received HTML response:", rawData.substring(0, 200) + "...");
-        return this.parseTextResponse(rawData, requestId, responseType);
       } else {
-        responseType = 'text';
+        // Get the text content first
         rawData = await response.text();
-        console.log("📥 Received text response:", rawData);
-        return this.parseTextResponse(rawData, requestId, responseType);
+        console.log("📥 Received response text:", rawData);
+        
+        // Determine if it's actually HTML or just text
+        const isActualHtml = this.isHtmlContent(rawData);
+        
+        if (isActualHtml) {
+          responseType = 'html';
+          return this.parseHtmlResponse(rawData, requestId, responseType);
+        } else {
+          responseType = 'text';
+          return this.parseTextResponse(rawData, requestId, responseType);
+        }
       }
     } catch (parseError) {
       console.error("❌ Error parsing response:", parseError);
@@ -109,7 +114,28 @@ export class N8nService {
     }
   }
 
-  private parseJsonResponse(data: any, requestId: string, responseType: string): N8nResponse {
+  private isHtmlContent(content: string): boolean {
+    const trimmedContent = content.trim();
+    
+    // Check for common HTML indicators
+    const htmlPatterns = [
+      /^<!DOCTYPE/i,
+      /^<html/i,
+      /<\/html>\s*$/i,
+      /<head>/i,
+      /<body>/i,
+      /<div[^>]*>/i,
+      /<span[^>]*>/i,
+      /<p[^>]*>/i
+    ];
+    
+    // If it contains multiple HTML tags, it's likely HTML
+    const htmlTagCount = (trimmedContent.match(/<[^>]+>/g) || []).length;
+    
+    return htmlPatterns.some(pattern => pattern.test(trimmedContent)) || htmlTagCount > 2;
+  }
+
+  private parseJsonResponse(data: any, requestId: string, responseType: 'json' | 'text' | 'html' | 'unknown'): N8nResponse {
     console.log("🔍 Parsing JSON response:", data);
 
     let aiResponse = "";
@@ -182,7 +208,7 @@ export class N8nService {
     };
   }
 
-  private parseTextResponse(data: string, requestId: string, responseType: string): N8nResponse {
+  private parseTextResponse(data: string, requestId: string, responseType: 'json' | 'text' | 'html' | 'unknown'): N8nResponse {
     console.log("🔍 Parsing text response:", data.substring(0, 100) + "...");
 
     // Try to extract JSON from text response
@@ -191,7 +217,7 @@ export class N8nService {
       if (jsonMatch) {
         const jsonData = JSON.parse(jsonMatch[0]);
         console.log("📥 Found JSON in text response:", jsonData);
-        return this.parseJsonResponse(jsonData, requestId, 'json-in-text');
+        return this.parseJsonResponse(jsonData, requestId, 'json');
       }
     } catch (e) {
       console.log("📥 No valid JSON found in text response");
@@ -208,24 +234,12 @@ export class N8nService {
       };
     }
 
-    // Handle HTML responses
-    if (responseType === 'html') {
-      return {
-        success: false,
-        message: "n8n hat eine HTML-Seite zurückgegeben",
-        aiResponse: "Ihr n8n-Webhook scheint eine HTML-Seite statt einer API-Antwort zurückzugeben. Bitte überprüfen Sie Ihre Webhook-URL und stellen Sie sicher, dass sie zu einem n8n-Webhook und nicht zu einer Webseite führt.",
-        error: "HTML response received instead of JSON",
-        responseType: responseType,
-        debug: { requestId, rawResponse: data.substring(0, 500) },
-      };
-    }
-
-    // Handle plain text responses
+    // Handle plain text responses (including simple responses like "Hallo")
     if (data.trim().length > 0) {
       return {
         success: true,
         message: "Text response received from n8n",
-        aiResponse: `n8n-Workflow Antwort: ${data.trim()}`,
+        aiResponse: data.trim(),
         responseType: responseType,
         debug: { requestId, rawResponse: data },
       };
@@ -239,6 +253,19 @@ export class N8nService {
       error: "Empty response",
       responseType: responseType,
       debug: { requestId, rawResponse: data },
+    };
+  }
+
+  private parseHtmlResponse(data: string, requestId: string, responseType: 'json' | 'text' | 'html' | 'unknown'): N8nResponse {
+    console.log("🔍 Parsing HTML response:", data.substring(0, 100) + "...");
+
+    return {
+      success: false,
+      message: "n8n hat eine HTML-Seite zurückgegeben",
+      aiResponse: "Ihr n8n-Webhook scheint eine HTML-Seite statt einer API-Antwort zurückzugeben. Bitte überprüfen Sie Ihre Webhook-URL und stellen Sie sicher, dass sie zu einem n8n-Webhook und nicht zu einer Webseite führt.",
+      error: "HTML response received instead of JSON",
+      responseType: responseType,
+      debug: { requestId, rawResponse: data.substring(0, 500) },
     };
   }
 }
