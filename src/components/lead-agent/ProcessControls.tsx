@@ -2,16 +2,32 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
+import { PersonalizationConfig } from "@/types/leadAgent";
 
 interface ProcessControlsProps {
   csvFile: File | null;
   webhookUrl: string;
+  personalizationConfig: PersonalizationConfig;
   isProcessing: boolean;
   onStartProcessing: () => void;
 }
 
-export function ProcessControls({ csvFile, webhookUrl, isProcessing, onStartProcessing }: ProcessControlsProps) {
-  const isReady = csvFile && webhookUrl;
+export function ProcessControls({ 
+  csvFile, 
+  webhookUrl, 
+  personalizationConfig,
+  isProcessing, 
+  onStartProcessing 
+}: ProcessControlsProps) {
+  const isReady = csvFile && webhookUrl && personalizationConfig.productService.trim();
+
+  const getMissingItems = () => {
+    const missing = [];
+    if (!csvFile) missing.push("CSV file");
+    if (!webhookUrl) missing.push("n8n webhook URL");
+    if (!personalizationConfig.productService.trim()) missing.push("product/service description");
+    return missing;
+  };
 
   return (
     <Card>
@@ -25,9 +41,9 @@ export function ProcessControls({ csvFile, webhookUrl, isProcessing, onStartProc
           {isProcessing ? "Processing..." : "Start Personalization"}
         </Button>
         {!isReady && (
-          <p className="text-xs text-muted-foreground mt-2">
-            Please upload a CSV file and configure your n8n webhook URL to begin.
-          </p>
+          <div className="text-xs text-muted-foreground mt-2">
+            <p>Missing: {getMissingItems().join(", ")}</p>
+          </div>
         )}
       </CardContent>
     </Card>

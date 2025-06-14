@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -9,6 +10,16 @@ import { ProcessControls } from "@/components/lead-agent/ProcessControls";
 import { ProcessingDashboard } from "@/components/lead-agent/ProcessingDashboard";
 import { useToast } from "@/hooks/use-toast";
 import { PersonalizationConfig } from "@/types/leadAgent";
+import { N8nService } from "@/services/n8n";
+
+interface ProcessingResult {
+  index: number;
+  leadData: any;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  result?: any;
+  error?: string;
+  personalizedMessage?: string;
+}
 
 const LeadAgent = () => {
   const { toast } = useToast();
@@ -19,7 +30,7 @@ const LeadAgent = () => {
     tonality: "Professional",
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingResults, setProcessingResults] = useState<any[]>([]);
+  const [processingResults, setProcessingResults] = useState<ProcessingResult[]>([]);
 
   const [webhookUrl, setWebhookUrl] = useState(() => {
     return localStorage.getItem("n8n-webhook-url") || "";
@@ -30,25 +41,130 @@ const LeadAgent = () => {
     localStorage.setItem("n8n-webhook-url", url);
   };
 
-  const handleStartProcessing = () => {
-    console.log("Starting processing with:", {
-      csvData,
+  const processLead = async (leadData: any, index: number): Promise<ProcessingResult> => {
+    console.log(`🔄 Processing lead ${index + 1}:`, leadData);
+    
+    const n8nService = new N8nService(webhookUrl);
+    const requestPayload = {
+      message: `Please create a personalized outreach message for this lead using the following context:
+      
+Product/Service: ${personalizationConfig.productService}
+Desired Tone: ${personalizationConfig.tonality}
+
+Lead Information:
+${Object.entries(leadData).map(([key, value]) => `${key}: ${value}`).join('\n')}
+
+Please generate a personalized message that addresses this specific lead's context and follows the specified tone.`,
+      targetAudience: {
+        industry: leadData.industry || leadData.companyName || "Unknown",
+        companySize: leadData.companySize || "Unknown", 
+        jobTitle: leadData.jobTitle || leadData.title || "Unknown",
+        location: leadData.location || leadData.city || "Unknown",
+        techStack: leadData.techStack || leadData.technology
+      },
+      timestamp: new Date().toISOString(),
+      leadData: leadData
+    };
+
+    try {
+      const response = await n8nService.sendMessage(requestPayload);
+      
+      if (response.success) {
+        return {
+          index,
+          leadData,
+          status: 'success',
+          result: response,
+          personalizedMessage: response.aiResponse || response.message
+        };
+      } else {
+        return {
+          index,
+          leadData,
+          status: 'error',
+          error: response.error || 'Processing failed'
+        };
+      }
+    } catch (error) {
+      console.error(`❌ Error processing lead ${index + 1}:`, error);
+      return {
+        index,
+        leadData,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  };
+
+  const handleStartProcessing = async () => {
+    if (!csvData.length || !webhookUrl || !personalizationConfig.productService) {
+      toast({
+        title: "Missing Information",
+        description: "Please ensure you have uploaded a CSV file, configured personalization, and set up n8n webhook.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log("🚀 Starting processing with:", {
+      leadCount: csvData.length,
       personalizationConfig,
       webhookUrl,
     });
+
+    setIsProcessing(true);
+    
+    // Initialize processing results
+    const initialResults: ProcessingResult[] = csvData.map((leadData, index) => ({
+      index,
+      leadData,
+      status: 'pending'
+    }));
+    setProcessingResults(initialResults);
+
     toast({
       title: "Processing Started",
-      description: "This is a placeholder. The processing logic will be implemented next.",
+      description: `Starting to process ${csvData.length} leads. This may take a few minutes.`,
     });
-    // Placeholder logic. Will be implemented in the next step.
-    setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      toast({
-        title: "Processing Finished",
-        description: "This is a placeholder.",
-      });
-    }, 3000);
+
+    // Process leads one by one to avoid overwhelming the webhook
+    for (let i = 0; i < csvData.length; i++) {
+      console.log(`📤 Processing lead ${i + 1}/${csvData.length}`);
+      
+      // Update status to processing
+      setProcessingResults(prev => prev.map(result => 
+        result.index === i ? { ...result, status: 'processing' } : result
+      ));
+
+      try {
+        const result = await processLead(csvData[i], i);
+        
+        // Update with result
+        setProcessingResults(prev => prev.map(existingResult => 
+          existingResult.index === i ? result : existingResult
+        ));
+
+        // Small delay between requests to be respectful to the webhook
+        if (i < csvData.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error(`Error processing lead ${i + 1}:`, error);
+        setProcessingResults(prev => prev.map(result => 
+          result.index === i ? { ...result, status: 'error', error: 'Processing failed' } : result
+        ));
+      }
+    }
+
+    setIsProcessing(false);
+    
+    const successCount = processingResults.filter(r => r.status === 'success').length;
+    const errorCount = processingResults.filter(r => r.status === 'error').length;
+    
+    toast({
+      title: "Processing Complete",
+      description: `Processed ${csvData.length} leads. ${successCount} successful, ${errorCount} errors.`,
+    });
   };
 
   return (
@@ -88,6 +204,7 @@ const LeadAgent = () => {
                    <ProcessControls
                     csvFile={csvFile}
                     webhookUrl={webhookUrl}
+                    personalizationConfig={personalizationConfig}
                     isProcessing={isProcessing}
                     onStartProcessing={handleStartProcessing}
                   />

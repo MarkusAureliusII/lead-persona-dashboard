@@ -1,4 +1,3 @@
-
 export interface N8nWebhookPayload {
   message: string;
   targetAudience: {
@@ -10,6 +9,7 @@ export interface N8nWebhookPayload {
   };
   timestamp: string;
   requestId?: string;
+  leadData?: any; // Add support for passing through the actual lead data
 }
 
 export interface N8nResponse {

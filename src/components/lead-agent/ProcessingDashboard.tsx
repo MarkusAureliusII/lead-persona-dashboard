@@ -2,28 +2,68 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TableIcon } from "lucide-react";
+import { Loader2, TableIcon, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface ProcessingResult {
+  index: number;
+  leadData: any;
+  status: 'pending' | 'processing' | 'success' | 'error';
+  result?: any;
+  error?: string;
+  personalizedMessage?: string;
+}
 
 interface ProcessingDashboardProps {
   csvData: any[];
-  processingResults: any[];
+  processingResults: ProcessingResult[];
   isProcessing: boolean;
 }
 
 export function ProcessingDashboard({ csvData, processingResults, isProcessing }: ProcessingDashboardProps) {
   const headers = csvData.length > 0 ? Object.keys(csvData[0]) : [];
 
-  const getStatus = (index: number) => {
-    if (processingResults[index]) {
-      return processingResults[index].status === 'success' ? '✅' : '❌';
+  const getStatusIcon = (index: number) => {
+    const result = processingResults.find(r => r.index === index);
+    if (!result) return <Clock className="h-4 w-4 text-gray-400" />;
+    
+    switch (result.status) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'processing':
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-400" />;
     }
-    return '⏳';
-  }
+  };
+
+  const getPersonalizedMessage = (index: number) => {
+    const result = processingResults.find(r => r.index === index);
+    return result?.personalizedMessage || '';
+  };
+
+  const getErrorMessage = (index: number) => {
+    const result = processingResults.find(r => r.index === index);
+    return result?.error || '';
+  };
+
+  const successCount = processingResults.filter(r => r.status === 'success').length;
+  const errorCount = processingResults.filter(r => r.status === 'error').length;
+  const processingCount = processingResults.filter(r => r.status === 'processing').length;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><TableIcon /> Results Dashboard</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <TableIcon /> Results Dashboard
+          {isProcessing && (
+            <span className="text-sm font-normal text-muted-foreground">
+              ({successCount} ✅ | {errorCount} ❌ | {processingCount} ⏳)
+            </span>
+          )}
+        </CardTitle>
         <CardDescription>
           {isProcessing 
             ? "Processing leads... Results will appear here as they complete."
@@ -31,28 +71,43 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isProcessing && csvData.length === 0 && (
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="ml-4 text-muted-foreground">Processing...</p>
-          </div>
-        )}
-
         {csvData.length > 0 ? (
-           <ScrollArea className="h-96 w-full rounded-md border">
+          <ScrollArea className="h-96 w-full rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  {isProcessing && <TableHead>Status</TableHead>}
+                  <TableHead>Status</TableHead>
                   {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
-                  {/* Later, we'll add a column for personalized message */}
+                  <TableHead>Personalized Message</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {csvData.map((row, index) => (
                   <TableRow key={index}>
-                     {isProcessing && <TableCell>{getStatus(index)}</TableCell>}
-                    {headers.map(header => <TableCell key={header}>{row[header]}</TableCell>)}
+                    <TableCell>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            {getStatusIcon(index)}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {getErrorMessage(index) || `Lead ${index + 1}`}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
+                    {headers.map(header => (
+                      <TableCell key={header}>{row[header]}</TableCell>
+                    ))}
+                    <TableCell className="max-w-xs">
+                      {getPersonalizedMessage(index) ? (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {getPersonalizedMessage(index)}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
