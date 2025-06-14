@@ -14,6 +14,7 @@ export interface N8nWebhookPayload {
 export interface N8nResponse {
   success: boolean;
   message: string;
+  aiResponse?: string;
   searchParameters?: {
     industry?: string;
     companySize?: string;
@@ -52,10 +53,34 @@ export class N8nService {
       const data = await response.json();
       console.log("n8n response:", data);
 
+      // Parse the AI agent response from n8n
+      let aiResponse = "";
+      let searchParameters = undefined;
+
+      // Check if n8n returned structured data
+      if (data.aiResponse) {
+        aiResponse = data.aiResponse;
+      } else if (data.response) {
+        aiResponse = data.response;
+      } else if (data.message && data.message !== "Workflow was started") {
+        aiResponse = data.message;
+      } else {
+        // If no meaningful response, generate a default response
+        aiResponse = `Ich habe Ihre Anfrage "${payload.message}" verarbeitet und erstelle entsprechende Suchparameter für Ihre Zielgruppe.`;
+      }
+
+      // Extract search parameters if provided
+      if (data.searchParameters) {
+        searchParameters = data.searchParameters;
+      } else if (data.parameters) {
+        searchParameters = data.parameters;
+      }
+
       return {
         success: true,
-        message: data.message || "Response received from n8n",
-        searchParameters: data.searchParameters,
+        message: "AI Agent Response received",
+        aiResponse: aiResponse,
+        searchParameters: searchParameters,
       };
     } catch (error) {
       console.error("Error calling n8n webhook:", error);

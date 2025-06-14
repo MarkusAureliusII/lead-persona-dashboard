@@ -37,8 +37,8 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const generateSearchParameters = (userInput: string): SearchParameters => {
-    // Simulate AI processing by extracting keywords and mapping to search parameters
+  const generateFallbackParameters = (userInput: string): SearchParameters => {
+    // Fallback logic for when n8n is not available
     const lowerInput = userInput.toLowerCase();
     
     let industry = targetAudience.industry;
@@ -101,43 +101,65 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
         timestamp: new Date().toISOString(),
       });
 
-      if (response.success) {
+      if (response.success && response.aiResponse) {
+        // Display the actual AI agent response
         const agentMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           type: "agent",
-          content: response.message,
+          content: response.aiResponse,
           timestamp: new Date(),
           parameters: response.searchParameters
         };
 
         setMessages(prev => [...prev, agentMessage]);
         
+        // If search parameters were provided, use them
         if (response.searchParameters) {
           onParametersGenerated(response.searchParameters);
+          
+          // Add a follow-up message about parameters
+          const parameterMessage: ChatMessage = {
+            id: (Date.now() + 2).toString(),
+            type: "agent",
+            content: `🎯 **Suchparameter generiert:**
+
+**Branche:** ${response.searchParameters.industry || 'Nicht spezifiziert'}
+**Position:** ${response.searchParameters.jobTitle || 'Nicht spezifiziert'}
+**Location:** ${response.searchParameters.location || 'Nicht spezifiziert'}
+**Firmengröße:** ${response.searchParameters.companySize || 'Nicht spezifiziert'}
+**Geschätzte Leads:** ~${response.searchParameters.estimatedLeads || 'Unbekannt'}
+
+Die Parameter wurden automatisch übernommen. Sie können diese in der Vorschau rechts sehen.`,
+            timestamp: new Date(),
+            parameters: response.searchParameters
+          };
+
+          setTimeout(() => {
+            setMessages(prev => [...prev, parameterMessage]);
+          }, 500);
         }
       } else {
-        // Fallback to local processing if n8n fails
-        console.log("n8n failed, using fallback logic");
-        const parameters = generateSearchParameters(currentInput);
+        // Fallback to local processing if n8n fails or doesn't provide AI response
+        console.log("n8n failed or no AI response, using fallback logic");
+        const parameters = generateFallbackParameters(currentInput);
         
-        const agentMessage: ChatMessage = {
+        const fallbackMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           type: "agent",
-          content: `Basierend auf Ihrer Anfrage habe ich folgende Suchparameter generiert (Fallback-Modus):
+          content: `Entschuldigung, der AI Agent ist momentan nicht verfügbar. Ich habe basierend auf Ihrer Anfrage "${currentInput}" folgende Suchparameter generiert:
 
 🎯 **Branche:** ${parameters.industry}
 👔 **Position:** ${parameters.jobTitle}
 📍 **Location:** ${parameters.location}
 🏢 **Firmengröße:** ${parameters.companySize}
+📊 **Geschätzte Leads:** ~${parameters.estimatedLeads}
 
-**Geschätzte Leads:** ~${parameters.estimatedLeads}
-
-*Hinweis: n8n Agent nicht verfügbar, lokale Verarbeitung verwendet.*`,
+*Hinweis: Fallback-Modus verwendet. Für bessere Ergebnisse prüfen Sie Ihre n8n-Konfiguration.*`,
           timestamp: new Date(),
           parameters
         };
 
-        setMessages(prev => [...prev, agentMessage]);
+        setMessages(prev => [...prev, fallbackMessage]);
         onParametersGenerated(parameters);
       }
     } catch (error) {
@@ -146,7 +168,7 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
       const errorMessage: ChatMessage = {
         id: (Date.now() + 2).toString(),
         type: "error",
-        content: "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+        content: "Entschuldigung, es ist ein Fehler aufgetreten. Bitte überprüfen Sie Ihre n8n-Konfiguration und versuchen Sie es erneut.",
         timestamp: new Date()
       };
 
@@ -180,7 +202,7 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
                 ? "bg-blue-600 text-white" 
                 : message.type === "error"
                 ? "bg-red-100 text-red-600"
-                : "bg-gray-200 text-gray-600"
+                : "bg-green-100 text-green-600"
             }`}>
               {message.type === "user" ? (
                 <User className="w-4 h-4" />
@@ -197,7 +219,7 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
                   ? "bg-blue-600 text-white"
                   : message.type === "error"
                   ? "bg-red-50 text-red-900 border border-red-200"
-                  : "bg-gray-100 text-gray-900"
+                  : "bg-green-50 text-green-900 border border-green-200"
               }`}>
                 <div className="whitespace-pre-line text-sm">{message.content}</div>
               </div>
@@ -209,7 +231,7 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
                     onClick={() => onParametersGenerated(message.parameters!)}
                     className="text-xs"
                   >
-                    Parameter übernehmen
+                    Parameter erneut übernehmen
                   </Button>
                 </div>
               )}
@@ -219,15 +241,15 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUr
         
         {isLoading && (
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
               <Bot className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <div className="inline-block p-3 rounded-lg bg-gray-100">
+              <div className="inline-block p-3 rounded-lg bg-green-50 border border-green-200">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
                 </div>
               </div>
             </div>
