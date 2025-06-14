@@ -8,7 +8,6 @@ export interface PersonalizationConfig {
 
 export interface UpsellOptions {
   emailVerification: boolean;
-  premiumFeatures: boolean;
 }
 
 export interface DataStreamingRestrictions {

@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -24,8 +23,7 @@ const LeadAgent = () => {
     productService: "",
     tonality: "Professional",
     upsellOptions: {
-      emailVerification: false,
-      premiumFeatures: false
+      emailVerification: false
     },
     dataStreamingRestrictions: {
       websiteOnly: false,

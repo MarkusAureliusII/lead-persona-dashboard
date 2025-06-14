@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Shield } from "lucide-react";
+import { Database, Globe, Linkedin } from "lucide-react";
 import { DataStreamingRestrictions as DataStreamingRestrictionsType } from "@/types/leadAgent";
 
 interface DataStreamingRestrictionsProps {
@@ -22,11 +22,11 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Datenstream-Beschränkungen
+          <Database className="h-5 w-5" />
+          Datenquellen für Personalisierung
         </CardTitle>
         <CardDescription>
-          Konfigurieren Sie Datenzugriffsbeschränkungen, um zu kontrollieren, wie Ihre Leads verarbeitet und abgerufen werden.
+          Wählen Sie aus, welche Datenquellen für die Personalisierung Ihrer Nachrichten verwendet werden sollen.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -36,8 +36,9 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             checked={restrictions.websiteOnly}
             onCheckedChange={(checked) => handleRestrictionChange('websiteOnly', checked as boolean)}
           />
-          <Label htmlFor="website-only" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Nur Website-Zugriff
+          <Label htmlFor="website-only" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Website
           </Label>
         </div>
         <div className="flex items-center space-x-2">
@@ -46,8 +47,9 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             checked={restrictions.privateLinkedIn}
             onCheckedChange={(checked) => handleRestrictionChange('privateLinkedIn', checked as boolean)}
           />
-          <Label htmlFor="private-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Privater LinkedIn-Zugriff
+          <Label htmlFor="private-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+            <Linkedin className="h-4 w-4" />
+            Privates LinkedIn Profil
           </Label>
         </div>
         <div className="flex items-center space-x-2">
@@ -56,8 +58,9 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             checked={restrictions.companyLinkedIn}
             onCheckedChange={(checked) => handleRestrictionChange('companyLinkedIn', checked as boolean)}
           />
-          <Label htmlFor="company-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Unternehmens-LinkedIn-Zugriff
+          <Label htmlFor="company-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+            <Linkedin className="h-4 w-4" />
+            Unternehmens LinkedIn Profil
           </Label>
         </div>
       </CardContent>
