@@ -4,15 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, TableIcon, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-interface ProcessingResult {
-  index: number;
-  leadData: any;
-  status: 'pending' | 'processing' | 'success' | 'error';
-  result?: any;
-  error?: string;
-  personalizedMessage?: string;
-}
+import { ProcessingResult } from "@/types/processing";
 
 interface ProcessingDashboardProps {
   csvData: any[];
