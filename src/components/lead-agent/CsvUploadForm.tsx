@@ -2,10 +2,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, AlertCircle } from "lucide-react";
 import Papa from "papaparse";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CsvUploadFormProps {
   onFileSelect: (file: File | null) => void;
@@ -15,6 +17,7 @@ interface CsvUploadFormProps {
 
 export function CsvUploadForm({ onFileSelect, setCsvData, onDataProcessed }: CsvUploadFormProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [fileName, setFileName] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,6 +27,15 @@ export function CsvUploadForm({ onFileSelect, setCsvData, onDataProcessed }: Csv
         toast({
           title: "Invalid file type",
           description: "Please upload a CSV file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to upload and save CSV files.",
           variant: "destructive",
         });
         return;
@@ -46,7 +58,7 @@ export function CsvUploadForm({ onFileSelect, setCsvData, onDataProcessed }: Csv
           
           toast({
             title: "File Uploaded",
-            description: `${results.data.length} rows loaded from ${file.name}.`,
+            description: `${results.data.length} rows loaded from ${file.name}. Data will be saved to your account.`,
           });
         },
         error: (error: any) => {
@@ -71,10 +83,25 @@ export function CsvUploadForm({ onFileSelect, setCsvData, onDataProcessed }: Csv
         <CardDescription>Upload a CSV file containing your leads. We recommend columns like 'firstName', 'lastName', 'companyName', and 'website'. Data will be saved to your database.</CardDescription>
       </CardHeader>
       <CardContent>
+        {!user && (
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You must be signed in to upload and save CSV files. Your data will be securely stored in your account.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="csv-file">CSV File</Label>
-          <Input id="csv-file" type="file" accept=".csv" onChange={handleFileChange} />
+          <Input 
+            id="csv-file" 
+            type="file" 
+            accept=".csv" 
+            onChange={handleFileChange}
+            disabled={!user}
+          />
           {fileName && <p className="text-sm text-muted-foreground mt-2">File: {fileName}</p>}
+          {!user && <p className="text-sm text-amber-600 mt-2">Please sign in to enable file upload</p>}
         </div>
       </CardContent>
     </Card>
