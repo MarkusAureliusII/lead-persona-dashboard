@@ -25,7 +25,7 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
     <Card className={`p-6 transition-colors ${getStatusColor(connectionStatus)}`}>
       <div className="flex items-center gap-2 mb-6">
         {getStatusIcon(connectionStatus)}
-        <h2 className="text-xl font-semibold text-gray-900">n8n Integration</h2>
+        <h2 className="text-xl font-semibold text-gray-900">3. n8n Integration</h2>
       </div>
 
       <div className="space-y-4">

@@ -2,40 +2,29 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
-import { TargetAudienceForm } from "@/components/lead-agent/TargetAudienceForm";
-import { LeadAgentChat } from "@/components/lead-agent/LeadAgentChat";
-import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
-import { MailingListIntegration } from "@/components/lead-agent/MailingListIntegration";
 import { useState } from "react";
+import { CsvUploadForm } from "@/components/lead-agent/CsvUploadForm";
+import { PersonalizationForm } from "@/components/lead-agent/PersonalizationForm";
+import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
+import { ProcessControls } from "@/components/lead-agent/ProcessControls";
+import { ProcessingDashboard } from "@/components/lead-agent/ProcessingDashboard";
+import { useToast } from "@/hooks/use-toast";
 
-export interface TargetAudience {
-  industry: string;
-  companySize: string;
-  jobTitle: string;
-  location: string;
-  techStack?: string;
-}
-
-export interface SearchParameters {
-  industry?: string;
-  companySize?: string;
-  jobTitle?: string;
-  location?: string;
-  techStack?: string;
-  estimatedLeads?: number;
+export interface PersonalizationConfig {
+  productService: string;
+  tonality: string;
 }
 
 const LeadAgent = () => {
-  const [targetAudience, setTargetAudience] = useState<TargetAudience>({
-    industry: "",
-    companySize: "",
-    jobTitle: "",
-    location: "",
-    techStack: ""
+  const { toast } = useToast();
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [personalizationConfig, setPersonalizationConfig] = useState<PersonalizationConfig>({
+    productService: "",
+    tonality: "Professional",
   });
-
-  const [searchParameters, setSearchParameters] = useState<SearchParameters>({});
-  const [mailingConfig, setMailingConfig] = useState({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingResults, setProcessingResults] = useState<any[]>([]);
 
   const [webhookUrl, setWebhookUrl] = useState(() => {
     return localStorage.getItem("n8n-webhook-url") || "";
@@ -44,6 +33,27 @@ const LeadAgent = () => {
   const handleWebhookUrlChange = (url: string) => {
     setWebhookUrl(url);
     localStorage.setItem("n8n-webhook-url", url);
+  };
+
+  const handleStartProcessing = () => {
+    console.log("Starting processing with:", {
+      csvData,
+      personalizationConfig,
+      webhookUrl,
+    });
+    toast({
+      title: "Processing Started",
+      description: "This is a placeholder. The processing logic will be implemented next.",
+    });
+    // Placeholder logic. Will be implemented in the next step.
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      toast({
+        title: "Processing Finished",
+        description: "This is a placeholder.",
+      });
+    }, 3000);
   };
 
   return (
@@ -55,36 +65,41 @@ const LeadAgent = () => {
           <main className="flex-1 p-6">
             <div className="container mx-auto max-w-7xl">
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Lead Scraping & Personalization</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">CSV Lead Personalization</h1>
                 <p className="text-gray-600">
-                  Describe your ideal customers to our AI agent. It will scrape leads, create personalized messages, and add them to your mailing lists.
+                  Upload a CSV file with your leads, configure the personalization, and let our AI do the work via your n8n webhook.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column - Configuration */}
                 <div className="space-y-8">
-                  <TargetAudienceForm 
-                    targetAudience={targetAudience}
-                    onUpdate={setTargetAudience}
+                  <CsvUploadForm 
+                    onFileSelect={setCsvFile} 
+                    setCsvData={setCsvData} 
                   />
-                  
-                  <MailingListIntegration 
-                    onConfigChange={setMailingConfig}
+                  <PersonalizationForm 
+                    config={personalizationConfig}
+                    onConfigChange={setPersonalizationConfig} 
                   />
-                  
                   <N8nConfiguration 
                     webhookUrl={webhookUrl}
                     onWebhookUrlChange={handleWebhookUrlChange}
                   />
                 </div>
 
-                {/* Right Column - AI Chat */}
+                {/* Right Column - Controls and Dashboard */}
                 <div className="space-y-8">
-                  <LeadAgentChat 
-                    onParametersGenerated={setSearchParameters}
-                    targetAudience={targetAudience}
+                   <ProcessControls
+                    csvFile={csvFile}
                     webhookUrl={webhookUrl}
+                    isProcessing={isProcessing}
+                    onStartProcessing={handleStartProcessing}
+                  />
+                  <ProcessingDashboard
+                    csvData={csvData}
+                    processingResults={processingResults}
+                    isProcessing={isProcessing}
                   />
                 </div>
               </div>
