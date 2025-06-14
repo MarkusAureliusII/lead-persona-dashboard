@@ -5,7 +5,8 @@ import {
   Bot,
   Mail,
   Settings,
-  Home
+  Home,
+  Users
 } from "lucide-react";
 
 import {
@@ -22,9 +23,14 @@ import {
 const menuItems = [
   {
     title: "Dashboard",
-    url: "#",
+    url: "/",
     icon: Home,
     isActive: true,
+  },
+  {
+    title: "Lead Agent",
+    url: "/lead-agent",
+    icon: Users,
   },
   {
     title: "Leads importieren",
