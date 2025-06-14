@@ -2,6 +2,19 @@
 export interface PersonalizationConfig {
   productService: string;
   tonality: string;
+  upsellOptions: UpsellOptions;
+  dataStreamingRestrictions: DataStreamingRestrictions;
+}
+
+export interface UpsellOptions {
+  emailVerification: boolean;
+  premiumFeatures: boolean;
+}
+
+export interface DataStreamingRestrictions {
+  websiteOnly: boolean;
+  privateLinkedIn: boolean;
+  companyLinkedIn: boolean;
 }
 
 export interface TargetAudience {

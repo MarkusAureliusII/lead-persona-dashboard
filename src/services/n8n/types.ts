@@ -11,6 +11,15 @@ export interface N8nWebhookPayload {
   timestamp: string;
   requestId?: string;
   leadData?: any; // Individual lead data for processing
+  upsellOptions?: {
+    emailVerification: boolean;
+    premiumFeatures: boolean;
+  };
+  dataStreamingRestrictions?: {
+    websiteOnly: boolean;
+    privateLinkedIn: boolean;
+    companyLinkedIn: boolean;
+  };
 }
 
 export interface N8nResponse {

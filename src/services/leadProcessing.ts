@@ -44,7 +44,9 @@ Please generate a personalized message that addresses this specific lead's conte
         techStack: leadData.techStack || leadData.technology
       },
       timestamp: new Date().toISOString(),
-      leadData: leadData
+      leadData: leadData,
+      upsellOptions: personalizationConfig.upsellOptions,
+      dataStreamingRestrictions: personalizationConfig.dataStreamingRestrictions
     };
 
     try {

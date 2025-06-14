@@ -23,6 +23,15 @@ const LeadAgent = () => {
   const [personalizationConfig, setPersonalizationConfig] = useState<PersonalizationConfig>({
     productService: "",
     tonality: "Professional",
+    upsellOptions: {
+      emailVerification: false,
+      premiumFeatures: false
+    },
+    dataStreamingRestrictions: {
+      websiteOnly: false,
+      privateLinkedIn: false,
+      companyLinkedIn: false
+    }
   });
 
   const handleStartProcessing = async () => {
