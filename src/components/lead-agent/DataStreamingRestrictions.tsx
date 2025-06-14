@@ -23,10 +23,10 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5" />
-          Data Streaming Restrictions
+          Datenstream-Beschränkungen
         </CardTitle>
         <CardDescription>
-          Configure data access restrictions to control how your leads are processed and accessed.
+          Konfigurieren Sie Datenzugriffsbeschränkungen, um zu kontrollieren, wie Ihre Leads verarbeitet und abgerufen werden.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -37,7 +37,7 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             onCheckedChange={(checked) => handleRestrictionChange('websiteOnly', checked as boolean)}
           />
           <Label htmlFor="website-only" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Website Only Access
+            Nur Website-Zugriff
           </Label>
         </div>
         <div className="flex items-center space-x-2">
@@ -47,7 +47,7 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             onCheckedChange={(checked) => handleRestrictionChange('privateLinkedIn', checked as boolean)}
           />
           <Label htmlFor="private-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Private LinkedIn Access
+            Privater LinkedIn-Zugriff
           </Label>
         </div>
         <div className="flex items-center space-x-2">
@@ -57,7 +57,7 @@ export function DataStreamingRestrictions({ restrictions, onRestrictionsChange }
             onCheckedChange={(checked) => handleRestrictionChange('companyLinkedIn', checked as boolean)}
           />
           <Label htmlFor="company-linkedin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Company LinkedIn Access
+            Unternehmens-LinkedIn-Zugriff
           </Label>
         </div>
       </CardContent>

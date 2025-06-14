@@ -18,35 +18,35 @@ export function PersonalizationForm({ config, onConfigChange }: PersonalizationF
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Bot /> 2. Configure Personalization</CardTitle>
-          <CardDescription>Tell the AI about your product and the desired tone for the outreach messages.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Bot /> 2. Personalisierung konfigurieren</CardTitle>
+          <CardDescription>Erzählen Sie der KI von Ihrem Produkt und dem gewünschten Ton für die Outreach-Nachrichten.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="product-service">Your Product/Service</Label>
+            <Label htmlFor="product-service">Ihr Produkt/Service</Label>
             <Textarea
               id="product-service"
-              placeholder="Describe your product or service. What problem does it solve? Who is it for?"
+              placeholder="Beschreiben Sie Ihr Produkt oder Ihren Service. Welches Problem löst es? Für wen ist es gedacht?"
               value={config.productService}
               onChange={(e) => onConfigChange({ ...config, productService: e.target.value })}
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="tonality">Email Tonality</Label>
+            <Label htmlFor="tonality">E-Mail-Tonalität</Label>
             <Select
               value={config.tonality}
               onValueChange={(value) => onConfigChange({ ...config, tonality: value })}
             >
               <SelectTrigger id="tonality" className="w-full mt-1">
-                <SelectValue placeholder="Select a tone" />
+                <SelectValue placeholder="Wählen Sie einen Ton" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Professional">Professional</SelectItem>
-                <SelectItem value="Friendly">Friendly</SelectItem>
-                <SelectItem value="Casual">Casual</SelectItem>
-                <SelectItem value="Direct">Direct</SelectItem>
-                <SelectItem value="Humorous">Humorous</SelectItem>
+                <SelectItem value="Professional">Professionell</SelectItem>
+                <SelectItem value="Friendly">Freundlich</SelectItem>
+                <SelectItem value="Casual">Lässig</SelectItem>
+                <SelectItem value="Direct">Direkt</SelectItem>
+                <SelectItem value="Humorous">Humorvoll</SelectItem>
               </SelectContent>
             </Select>
           </div>

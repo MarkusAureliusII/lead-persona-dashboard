@@ -23,10 +23,10 @@ export function UpsellOptions({ options, onOptionsChange }: UpsellOptionsProps) 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
-          Upsell Options
+          Extra Services
         </CardTitle>
         <CardDescription>
-          Select additional premium features to enhance your lead processing workflow.
+          Wählen Sie zusätzliche Premium-Features aus, um Ihren Lead-Verarbeitungsworkflow zu verbessern.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -37,7 +37,7 @@ export function UpsellOptions({ options, onOptionsChange }: UpsellOptionsProps) 
             onCheckedChange={(checked) => handleOptionChange('emailVerification', checked as boolean)}
           />
           <Label htmlFor="email-verification" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Email Verification
+            Live Email Validierung
           </Label>
         </div>
         <div className="flex items-center space-x-2">
@@ -47,7 +47,7 @@ export function UpsellOptions({ options, onOptionsChange }: UpsellOptionsProps) 
             onCheckedChange={(checked) => handleOptionChange('premiumFeatures', checked as boolean)}
           />
           <Label htmlFor="premium-features" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Premium Features
+            Bevorzugte Behandlung deiner Anfrage
           </Label>
         </div>
       </CardContent>
