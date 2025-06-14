@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SignInForm } from './SignInForm';
@@ -9,6 +11,14 @@ import { ForgotPasswordForm } from './ForgotPasswordForm';
 export function AuthForm() {
   const [activeTab, setActiveTab] = useState('signin');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const resetForm = () => {
     setShowForgotPassword(false);
