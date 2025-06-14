@@ -2,13 +2,15 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, User, Send } from "lucide-react";
+import { Bot, User, Send, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { TargetAudience, SearchParameters } from "@/pages/LeadAgent";
+import { N8nService } from "@/services/n8nService";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
   id: string;
-  type: "user" | "agent";
+  type: "user" | "agent" | "error";
   content: string;
   timestamp: Date;
   parameters?: SearchParameters;
@@ -17,19 +19,23 @@ interface ChatMessage {
 interface LeadAgentChatProps {
   onParametersGenerated: (parameters: SearchParameters) => void;
   targetAudience: TargetAudience;
+  webhookUrl?: string;
 }
 
-export function LeadAgentChat({ onParametersGenerated, targetAudience }: LeadAgentChatProps) {
+export function LeadAgentChat({ onParametersGenerated, targetAudience, webhookUrl }: LeadAgentChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
       type: "agent",
-      content: "Hallo! Ich bin Ihr Lead Agent. Beschreiben Sie mir in natürlicher Sprache, welche Art von Leads Sie suchen. Zum Beispiel: 'Suche CTOs von SaaS Unternehmen in Deutschland'",
+      content: webhookUrl 
+        ? "Hallo! Ich bin Ihr n8n-powered Lead Agent. Beschreiben Sie mir in natürlicher Sprache, welche Art von Leads Sie suchen. Zum Beispiel: 'Suche CTOs von SaaS Unternehmen in Deutschland'"
+        : "Konfigurieren Sie zunächst Ihre n8n Webhook URL in den Einstellungen, um den AI Agent zu verwenden.",
       timestamp: new Date()
     }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const generateSearchParameters = (userInput: string): SearchParameters => {
     // Simulate AI processing by extracting keywords and mapping to search parameters
@@ -66,6 +72,15 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience }: LeadAge
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
+    if (!webhookUrl) {
+      toast({
+        title: "Konfiguration erforderlich",
+        description: "Bitte konfigurieren Sie zunächst Ihre n8n Webhook URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: "user",
@@ -74,17 +89,41 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience }: LeadAge
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue("");
     setIsLoading(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const parameters = generateSearchParameters(inputValue);
-      
-      const agentMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: "agent",
-        content: `Basierend auf Ihrer Anfrage habe ich folgende Suchparameter generiert:
+    try {
+      const n8nService = new N8nService(webhookUrl);
+      const response = await n8nService.sendMessage({
+        message: currentInput,
+        targetAudience,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (response.success) {
+        const agentMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          type: "agent",
+          content: response.message,
+          timestamp: new Date(),
+          parameters: response.searchParameters
+        };
+
+        setMessages(prev => [...prev, agentMessage]);
+        
+        if (response.searchParameters) {
+          onParametersGenerated(response.searchParameters);
+        }
+      } else {
+        // Fallback to local processing if n8n fails
+        console.log("n8n failed, using fallback logic");
+        const parameters = generateSearchParameters(currentInput);
+        
+        const agentMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          type: "agent",
+          content: `Basierend auf Ihrer Anfrage habe ich folgende Suchparameter generiert (Fallback-Modus):
 
 🎯 **Branche:** ${parameters.industry}
 👔 **Position:** ${parameters.jobTitle}
@@ -93,15 +132,28 @@ export function LeadAgentChat({ onParametersGenerated, targetAudience }: LeadAge
 
 **Geschätzte Leads:** ~${parameters.estimatedLeads}
 
-Möchten Sie diese Parameter verwenden oder soll ich sie anpassen?`,
-        timestamp: new Date(),
-        parameters
+*Hinweis: n8n Agent nicht verfügbar, lokale Verarbeitung verwendet.*`,
+          timestamp: new Date(),
+          parameters
+        };
+
+        setMessages(prev => [...prev, agentMessage]);
+        onParametersGenerated(parameters);
+      }
+    } catch (error) {
+      console.error("Error in handleSendMessage:", error);
+      
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 2).toString(),
+        type: "error",
+        content: "Entschuldigung, es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+        timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, agentMessage]);
-      onParametersGenerated(parameters);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,15 +178,25 @@ Möchten Sie diese Parameter verwenden oder soll ich sie anpassen?`,
             <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
               message.type === "user" 
                 ? "bg-blue-600 text-white" 
+                : message.type === "error"
+                ? "bg-red-100 text-red-600"
                 : "bg-gray-200 text-gray-600"
             }`}>
-              {message.type === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+              {message.type === "user" ? (
+                <User className="w-4 h-4" />
+              ) : message.type === "error" ? (
+                <AlertCircle className="w-4 h-4" />
+              ) : (
+                <Bot className="w-4 h-4" />
+              )}
             </div>
             
             <div className={`flex-1 ${message.type === "user" ? "text-right" : ""}`}>
               <div className={`inline-block p-3 rounded-lg max-w-xs lg:max-w-md ${
                 message.type === "user"
                   ? "bg-blue-600 text-white"
+                  : message.type === "error"
+                  ? "bg-red-50 text-red-900 border border-red-200"
                   : "bg-gray-100 text-gray-900"
               }`}>
                 <div className="whitespace-pre-line text-sm">{message.content}</div>
@@ -175,15 +237,15 @@ Möchten Sie diese Parameter verwenden oder soll ich sie anpassen?`,
 
       <div className="flex gap-2">
         <Input
-          placeholder="z.B. 'Suche CTOs von SaaS Unternehmen in Deutschland'"
+          placeholder={webhookUrl ? "z.B. 'Suche CTOs von SaaS Unternehmen in Deutschland'" : "Konfigurieren Sie zunächst die n8n Webhook URL"}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
-          disabled={isLoading}
+          disabled={isLoading || !webhookUrl}
         />
         <Button 
           onClick={handleSendMessage}
-          disabled={isLoading || !inputValue.trim()}
+          disabled={isLoading || !inputValue.trim() || !webhookUrl}
           size="icon"
         >
           <Send className="w-4 h-4" />

@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -6,6 +5,7 @@ import { TargetAudienceForm } from "@/components/lead-agent/TargetAudienceForm";
 import { LeadAgentChat } from "@/components/lead-agent/LeadAgentChat";
 import { ApolloSearchPreview } from "@/components/lead-agent/ApolloSearchPreview";
 import { SearchConfiguration } from "@/components/lead-agent/SearchConfiguration";
+import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
 import { useState } from "react";
 
 export interface TargetAudience {
@@ -41,6 +41,15 @@ const LeadAgent = () => {
     exportFormat: "csv"
   });
 
+  const [webhookUrl, setWebhookUrl] = useState(() => {
+    return localStorage.getItem("n8n-webhook-url") || "";
+  });
+
+  const handleWebhookUrlChange = (url: string) => {
+    setWebhookUrl(url);
+    localStorage.setItem("n8n-webhook-url", url);
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
@@ -64,9 +73,15 @@ const LeadAgent = () => {
                     onUpdate={setTargetAudience}
                   />
                   
+                  <N8nConfiguration 
+                    webhookUrl={webhookUrl}
+                    onWebhookUrlChange={handleWebhookUrlChange}
+                  />
+                  
                   <LeadAgentChat 
                     onParametersGenerated={setSearchParameters}
                     targetAudience={targetAudience}
+                    webhookUrl={webhookUrl}
                   />
                 </div>
 
