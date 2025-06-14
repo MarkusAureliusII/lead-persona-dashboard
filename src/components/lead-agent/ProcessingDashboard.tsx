@@ -2,9 +2,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TableIcon, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Loader2, TableIcon, CheckCircle, XCircle, Clock, Zap } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProcessingResult } from "@/types/processing";
+import { Progress } from "@/components/ui/progress";
 
 interface ProcessingDashboardProps {
   csvData: any[];
@@ -44,23 +45,45 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
   const successCount = processingResults.filter(r => r.status === 'success').length;
   const errorCount = processingResults.filter(r => r.status === 'error').length;
   const processingCount = processingResults.filter(r => r.status === 'processing').length;
+  
+  const totalProcessed = successCount + errorCount;
+  const progressPercentage = csvData.length > 0 ? (totalProcessed / csvData.length) * 100 : 0;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TableIcon /> Results Dashboard
+          <TableIcon /> 
+          Batch Processing Results
           {isProcessing && (
-            <span className="text-sm font-normal text-muted-foreground">
-              ({successCount} ✅ | {errorCount} ❌ | {processingCount} ⏳)
-            </span>
+            <Zap className="h-4 w-4 text-blue-500 animate-pulse" />
           )}
         </CardTitle>
         <CardDescription>
           {isProcessing 
-            ? "Processing leads... Results will appear here as they complete."
+            ? "Processing all leads in batch mode... Results will appear here when complete."
             : "Preview your uploaded data below. Processed leads with personalized messages will appear here."}
         </CardDescription>
+        
+        {isProcessing && csvData.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Batch Progress</span>
+              <span>{totalProcessed}/{csvData.length} leads</span>
+            </div>
+            <Progress value={progressPercentage} className="w-full" />
+          </div>
+        )}
+        
+        {(successCount > 0 || errorCount > 0 || processingCount > 0) && (
+          <div className="flex gap-4 text-sm">
+            <span className="text-green-600">✅ {successCount} successful</span>
+            <span className="text-red-600">❌ {errorCount} errors</span>
+            {processingCount > 0 && (
+              <span className="text-blue-600">⏳ {processingCount} processing</span>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {csvData.length > 0 ? (

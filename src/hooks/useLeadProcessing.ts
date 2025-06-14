@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PersonalizationConfig } from '@/types/leadAgent';
 import { ProcessingResult } from '@/types/processing';
 import { useCsvUpload } from '@/hooks/useCsvUpload';
-import { LeadProcessingService } from '@/services/leadProcessing';
+import { BatchProcessingService } from '@/services/batchProcessing';
 import { ProcessingResultsManager } from '@/utils/processingResults';
 
 export function useLeadProcessing() {
@@ -38,7 +38,7 @@ export function useLeadProcessing() {
       return;
     }
 
-    console.log("🚀 Starting processing with:", {
+    console.log("🚀 Starting batch processing with:", {
       leadCount: csvData.length,
       personalizationConfig,
       webhookUrl,
@@ -59,54 +59,51 @@ export function useLeadProcessing() {
     setProcessingResults(initialResults);
 
     toast({
-      title: "Processing Started",
-      description: `Starting to process ${csvData.length} leads. This may take a few minutes.`,
+      title: "Batch Processing Started",
+      description: `Starting to process ${csvData.length} leads in a single batch. This should be much faster than individual processing.`,
     });
 
-    // Process leads one by one to avoid overwhelming the webhook
-    for (let i = 0; i < csvData.length; i++) {
-      console.log(`📤 Processing lead ${i + 1}/${csvData.length}`);
-      
-      // Update status to processing
-      setProcessingResults(prev => 
-        ProcessingResultsManager.updateResultStatus(prev, i, 'processing')
+    try {
+      // Process all leads in a single batch
+      const batchResults = await BatchProcessingService.processBatch(
+        csvData,
+        personalizationConfig,
+        webhookUrl,
+        csvUploadId,
+        updateLeadProcessingResult
       );
 
-      try {
-        const result = await LeadProcessingService.processLead(
-          csvData[i], 
-          i, 
-          personalizationConfig, 
-          webhookUrl, 
-          csvUploadId,
-          updateLeadProcessingResult
-        );
-        
-        // Update with result
-        setProcessingResults(prev => 
-          ProcessingResultsManager.updateResultWithData(prev, result)
-        );
+      // Update processing results with batch results
+      setProcessingResults(batchResults);
 
-        // Small delay between requests to be respectful to the webhook
-        if (i < csvData.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      } catch (error) {
-        console.error(`Error processing lead ${i + 1}:`, error);
-        setProcessingResults(prev => 
-          ProcessingResultsManager.updateResultStatus(prev, i, 'error')
-        );
-      }
+      const { successCount, errorCount } = ProcessingResultsManager.getProcessingStats(batchResults);
+      
+      toast({
+        title: "Batch Processing Complete",
+        description: `Processed ${csvData.length} leads. ${successCount} successful, ${errorCount} errors.`,
+      });
+
+    } catch (error) {
+      console.error('❌ Batch processing failed:', error);
+      
+      // Mark all as error if batch processing completely fails
+      const errorResults = csvData.map((leadData, index) => ({
+        index,
+        leadData,
+        status: 'error' as const,
+        error: error instanceof Error ? error.message : 'Batch processing failed'
+      }));
+      
+      setProcessingResults(errorResults);
+      
+      toast({
+        title: "Batch Processing Failed",
+        description: "The batch processing failed. Please check your n8n configuration and try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
-    
-    const { successCount, errorCount } = ProcessingResultsManager.getProcessingStats(processingResults);
-    
-    toast({
-      title: "Processing Complete",
-      description: `Processed ${csvData.length} leads. ${successCount} successful, ${errorCount} errors.`,
-    });
   };
 
   return {

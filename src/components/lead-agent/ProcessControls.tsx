@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Zap } from "lucide-react";
 import { PersonalizationConfig } from "@/types/leadAgent";
 
 interface ProcessControlsProps {
@@ -32,17 +32,27 @@ export function ProcessControls({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>4. Start Processing</CardTitle>
-        <CardDescription>When you're ready, start the personalization process. Results will appear below.</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5" />
+          4. Start Batch Processing
+        </CardTitle>
+        <CardDescription>
+          Process all leads in a single batch request to your n8n workflow. This is much faster than individual processing.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Button onClick={onStartProcessing} disabled={!isReady || isProcessing} className="w-full">
           <Play className="mr-2 h-4 w-4" />
-          {isProcessing ? "Processing..." : "Start Personalization"}
+          {isProcessing ? "Processing Batch..." : "Start Batch Personalization"}
         </Button>
         {!isReady && (
           <div className="text-xs text-muted-foreground mt-2">
             <p>Missing: {getMissingItems().join(", ")}</p>
+          </div>
+        )}
+        {isReady && (
+          <div className="text-xs text-green-600 mt-2">
+            <p>✓ Ready for batch processing - all leads will be sent in a single request</p>
           </div>
         )}
       </CardContent>
