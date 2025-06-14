@@ -85,9 +85,6 @@ export function useN8nConnectionTest() {
           if (contentType.includes('application/json')) {
             responseData = await response.json();
             responseType = 'JSON';
-          } else if (contentType.includes('text/html')) {
-            responseData = await response.text();
-            responseType = 'HTML';
           } else {
             responseData = await response.text();
             responseType = 'Text';
@@ -100,7 +97,7 @@ export function useN8nConnectionTest() {
 
         console.log("🧪 Test response data:", responseData);
 
-        // Analyze the response
+        // Vereinfachte Logik - jede erfolgreiche Response ist gut
         if (responseType === 'JSON') {
           setConnectionStatus('success');
           setTestResult({
@@ -114,56 +111,20 @@ export function useN8nConnectionTest() {
             title: "✅ Verbindung erfolgreich",
             description: "Die n8n Webhook Verbindung wurde erfolgreich getestet! JSON-Response erhalten.",
           });
-        } else if (responseType === 'HTML') {
-          setConnectionStatus('error');
+        } else {
+          // Alle Text-Responses als Erfolg behandeln
+          const text = responseData.toString().trim();
+          setConnectionStatus('success');
           setTestResult({
-            status: 'error',
-            message: 'HTML-Seite statt API-Response',
-            responseType: 'HTML',
-            details: 'Die URL führt zu einer HTML-Seite. Bitte überprüfen Sie, ob Sie die richtige Webhook-URL verwenden.'
+            status: 'success',
+            message: 'Verbindung erfolgreich - Text Response',
+            responseType: 'Text',
+            details: `Text-Response erhalten: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`
           });
           
           toast({
-            title: "❌ Falsche URL",
-            description: "Die URL führt zu einer HTML-Seite statt zu einem n8n-Webhook. Bitte überprüfen Sie die URL.",
-            variant: "destructive",
-          });
-        } else if (responseType === 'Text') {
-          const text = responseData.toString().trim();
-          if (text === "Workflow was started" || text.includes("started")) {
-            setConnectionStatus('warning');
-            setTestResult({
-              status: 'warning',
-              message: 'Workflow gestartet - Keine AI-Response',
-              responseType: 'Text',
-              details: 'Der Workflow wurde gestartet, gibt aber keine AI-Antwort zurück. Für optimale Ergebnisse sollte Ihr Workflow eine JSON-Response mit einem "aiResponse" Feld zurückgeben.'
-            });
-            
-            toast({
-              title: "⚠️ Teilweise erfolgreich",
-              description: "Workflow wurde gestartet, aber keine AI-Response erhalten. Überprüfen Sie Ihre Workflow-Konfiguration.",
-            });
-          } else {
-            setConnectionStatus('success');
-            setTestResult({
-              status: 'success',
-              message: 'Verbindung erfolgreich - Text Response',
-              responseType: 'Text',
-              details: `Text-Response erhalten: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`
-            });
-            
-            toast({
-              title: "✅ Verbindung erfolgreich",
-              description: "Die n8n Webhook Verbindung funktioniert! Text-Response erhalten.",
-            });
-          }
-        } else {
-          setConnectionStatus('warning');
-          setTestResult({
-            status: 'warning',
-            message: 'Unbekanntes Response-Format',
-            responseType: responseType,
-            details: 'Response erhalten, aber Format ist unbekannt.'
+            title: "✅ Verbindung erfolgreich",
+            description: "Die n8n Webhook Verbindung funktioniert! Response erhalten.",
           });
         }
       } else {
