@@ -11,6 +11,7 @@ import { ProcessingDashboard } from "@/components/lead-agent/ProcessingDashboard
 import { useToast } from "@/hooks/use-toast";
 import { PersonalizationConfig } from "@/types/leadAgent";
 import { N8nService } from "@/services/n8n";
+import { useCsvUpload } from "@/hooks/useCsvUpload";
 
 interface ProcessingResult {
   index: number;
@@ -23,8 +24,11 @@ interface ProcessingResult {
 
 const LeadAgent = () => {
   const { toast } = useToast();
+  const { createCsvUpload, saveCsvLeads, savePersonalizationConfig, updateLeadProcessingResult } = useCsvUpload();
+  
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvUploadId, setCsvUploadId] = useState<string | null>(null);
   const [personalizationConfig, setPersonalizationConfig] = useState<PersonalizationConfig>({
     productService: "",
     tonality: "Professional",
@@ -41,8 +45,32 @@ const LeadAgent = () => {
     localStorage.setItem("n8n-webhook-url", url);
   };
 
+  const handleCsvDataProcessed = async (file: File, data: any[]) => {
+    console.log("📊 Processing CSV data for database storage:", { filename: file.name, rowCount: data.length });
+    
+    // Create CSV upload record in database
+    const uploadId = await createCsvUpload(file.name, data.length);
+    if (uploadId) {
+      setCsvUploadId(uploadId);
+      
+      // Save CSV leads to database
+      const success = await saveCsvLeads(uploadId, data);
+      if (success) {
+        toast({
+          title: "CSV Data Saved",
+          description: `Successfully saved ${data.length} leads to database.`,
+        });
+      }
+    }
+  };
+
   const processLead = async (leadData: any, index: number): Promise<ProcessingResult> => {
     console.log(`🔄 Processing lead ${index + 1}:`, leadData);
+    
+    // Update status to processing in database
+    if (csvUploadId) {
+      await updateLeadProcessingResult(csvUploadId, index, 'processing');
+    }
     
     const n8nService = new N8nService(webhookUrl);
     const requestPayload = {
@@ -70,29 +98,67 @@ Please generate a personalized message that addresses this specific lead's conte
       const response = await n8nService.sendMessage(requestPayload);
       
       if (response.success) {
-        return {
+        const result = {
           index,
           leadData,
-          status: 'success',
+          status: 'success' as const,
           result: response,
           personalizedMessage: response.aiResponse || response.message
         };
+
+        // Update success status in database
+        if (csvUploadId) {
+          await updateLeadProcessingResult(
+            csvUploadId, 
+            index, 
+            'success', 
+            result.personalizedMessage
+          );
+        }
+
+        return result;
       } else {
-        return {
+        const result = {
           index,
           leadData,
-          status: 'error',
+          status: 'error' as const,
           error: response.error || 'Processing failed'
         };
+
+        // Update error status in database
+        if (csvUploadId) {
+          await updateLeadProcessingResult(
+            csvUploadId, 
+            index, 
+            'error', 
+            undefined, 
+            result.error
+          );
+        }
+
+        return result;
       }
     } catch (error) {
       console.error(`❌ Error processing lead ${index + 1}:`, error);
-      return {
+      const result = {
         index,
         leadData,
-        status: 'error',
+        status: 'error' as const,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
+
+      // Update error status in database
+      if (csvUploadId) {
+        await updateLeadProcessingResult(
+          csvUploadId, 
+          index, 
+          'error', 
+          undefined, 
+          result.error
+        );
+      }
+
+      return result;
     }
   };
 
@@ -106,11 +172,28 @@ Please generate a personalized message that addresses this specific lead's conte
       return;
     }
 
+    if (!csvUploadId) {
+      toast({
+        title: "CSV Not Saved",
+        description: "Please re-upload your CSV file to save it to the database first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     console.log("🚀 Starting processing with:", {
       leadCount: csvData.length,
       personalizationConfig,
       webhookUrl,
+      csvUploadId
     });
+
+    // Save personalization config to database
+    await savePersonalizationConfig(
+      csvUploadId, 
+      personalizationConfig.productService, 
+      personalizationConfig.tonality
+    );
 
     setIsProcessing(true);
     
@@ -187,7 +270,8 @@ Please generate a personalized message that addresses this specific lead's conte
                 <div className="space-y-8">
                   <CsvUploadForm 
                     onFileSelect={setCsvFile} 
-                    setCsvData={setCsvData} 
+                    setCsvData={setCsvData}
+                    onDataProcessed={handleCsvDataProcessed}
                   />
                   <PersonalizationForm 
                     config={personalizationConfig}

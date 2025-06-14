@@ -10,9 +10,10 @@ import { useState } from "react";
 interface CsvUploadFormProps {
   onFileSelect: (file: File | null) => void;
   setCsvData: (data: any[]) => void;
+  onDataProcessed?: (file: File, data: any[]) => void;
 }
 
-export function CsvUploadForm({ onFileSelect, setCsvData }: CsvUploadFormProps) {
+export function CsvUploadForm({ onFileSelect, setCsvData, onDataProcessed }: CsvUploadFormProps) {
   const { toast } = useToast();
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -37,6 +38,12 @@ export function CsvUploadForm({ onFileSelect, setCsvData }: CsvUploadFormProps) 
         complete: (results) => {
           console.log("Parsed CSV data:", results.data);
           setCsvData(results.data);
+          
+          // Call the new callback to handle database storage
+          if (onDataProcessed) {
+            onDataProcessed(file, results.data);
+          }
+          
           toast({
             title: "File Uploaded",
             description: `${results.data.length} rows loaded from ${file.name}.`,
@@ -61,7 +68,7 @@ export function CsvUploadForm({ onFileSelect, setCsvData }: CsvUploadFormProps) 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><UploadCloud /> 1. Upload Leads</CardTitle>
-        <CardDescription>Upload a CSV file containing your leads. We recommend columns like 'firstName', 'lastName', 'companyName', and 'website'.</CardDescription>
+        <CardDescription>Upload a CSV file containing your leads. We recommend columns like 'firstName', 'lastName', 'companyName', and 'website'. Data will be saved to your database.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid w-full max-w-sm items-center gap-1.5">

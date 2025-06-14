@@ -9,7 +9,118 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      csv_leads: {
+        Row: {
+          created_at: string
+          csv_upload_id: string
+          error_message: string | null
+          id: string
+          lead_data: Json
+          personalized_message: string | null
+          processed_at: string | null
+          processing_status: string
+          row_index: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          csv_upload_id: string
+          error_message?: string | null
+          id?: string
+          lead_data: Json
+          personalized_message?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          row_index: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          csv_upload_id?: string
+          error_message?: string | null
+          id?: string
+          lead_data?: Json
+          personalized_message?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          row_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "csv_leads_csv_upload_id_fkey"
+            columns: ["csv_upload_id"]
+            isOneToOne: false
+            referencedRelation: "csv_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      csv_uploads: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          row_count: number
+          status: string
+          updated_at: string
+          upload_date: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          row_count?: number
+          status?: string
+          updated_at?: string
+          upload_date?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          row_count?: number
+          status?: string
+          updated_at?: string
+          upload_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      personalization_configs: {
+        Row: {
+          created_at: string
+          csv_upload_id: string
+          id: string
+          product_service: string
+          tonality: string
+        }
+        Insert: {
+          created_at?: string
+          csv_upload_id: string
+          id?: string
+          product_service: string
+          tonality: string
+        }
+        Update: {
+          created_at?: string
+          csv_upload_id?: string
+          id?: string
+          product_service?: string
+          tonality?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personalization_configs_csv_upload_id_fkey"
+            columns: ["csv_upload_id"]
+            isOneToOne: false
+            referencedRelation: "csv_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
