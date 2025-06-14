@@ -1,4 +1,3 @@
-
 export interface N8nWebhookPayload {
   message: string;
   targetAudience: {
@@ -13,7 +12,6 @@ export interface N8nWebhookPayload {
   leadData?: any; // Individual lead data for processing
   upsellOptions?: {
     emailVerification: boolean;
-    premiumFeatures: boolean;
   };
   dataStreamingRestrictions?: {
     websiteOnly: boolean;
