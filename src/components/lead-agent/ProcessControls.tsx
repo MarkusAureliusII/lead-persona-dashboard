@@ -34,16 +34,16 @@ export function ProcessControls({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Zap className="h-5 w-5" />
-          4. Start Batch Processing
+          4. Start Individual Processing
         </CardTitle>
         <CardDescription>
-          Process all leads in a single batch request to your n8n workflow. This is much faster than individual processing.
+          Process each lead individually with real-time status updates. You'll see live progress as each lead is processed.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Button onClick={onStartProcessing} disabled={!isReady || isProcessing} className="w-full">
           <Play className="mr-2 h-4 w-4" />
-          {isProcessing ? "Processing Batch..." : "Start Batch Personalization"}
+          {isProcessing ? "Processing Leads..." : "Start Individual Personalization"}
         </Button>
         {!isReady && (
           <div className="text-xs text-muted-foreground mt-2">
@@ -52,7 +52,7 @@ export function ProcessControls({
         )}
         {isReady && (
           <div className="text-xs text-green-600 mt-2">
-            <p>✓ Ready for batch processing - all leads will be sent in a single request</p>
+            <p>✓ Ready for individual processing - you'll see live updates for each lead</p>
           </div>
         )}
       </CardContent>

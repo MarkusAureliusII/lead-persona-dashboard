@@ -10,15 +10,7 @@ export interface N8nWebhookPayload {
   };
   timestamp: string;
   requestId?: string;
-  leadData?: any; // Add support for passing through the actual lead data
-  batchData?: {
-    leads: any[];
-    personalizationConfig: {
-      productService: string;
-      tonality: string;
-    };
-    csvUploadId: string;
-  };
+  leadData?: any; // Individual lead data for processing
 }
 
 export interface N8nResponse {
@@ -36,12 +28,6 @@ export interface N8nResponse {
   error?: string;
   debug?: any;
   responseType?: 'json' | 'text' | 'html' | 'unknown';
-  batchResults?: Array<{
-    index: number;
-    success: boolean;
-    personalizedMessage?: string;
-    error?: string;
-  }>;
 }
 
 export type ResponseType = 'json' | 'text' | 'html' | 'unknown';

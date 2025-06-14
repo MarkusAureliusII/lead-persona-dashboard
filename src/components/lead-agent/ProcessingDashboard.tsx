@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, TableIcon, CheckCircle, XCircle, Clock, Zap } from "lucide-react";
+import { Loader2, TableIcon, CheckCircle, XCircle, Clock, Activity } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProcessingResult } from "@/types/processing";
 import { Progress } from "@/components/ui/progress";
@@ -45,6 +45,7 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
   const successCount = processingResults.filter(r => r.status === 'success').length;
   const errorCount = processingResults.filter(r => r.status === 'error').length;
   const processingCount = processingResults.filter(r => r.status === 'processing').length;
+  const pendingCount = processingResults.filter(r => r.status === 'pending').length;
   
   const totalProcessed = successCount + errorCount;
   const progressPercentage = csvData.length > 0 ? (totalProcessed / csvData.length) * 100 : 0;
@@ -54,33 +55,36 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TableIcon /> 
-          Batch Processing Results
+          Live Processing Dashboard
           {isProcessing && (
-            <Zap className="h-4 w-4 text-blue-500 animate-pulse" />
+            <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
           )}
         </CardTitle>
         <CardDescription>
           {isProcessing 
-            ? "Processing all leads in batch mode... Results will appear here when complete."
-            : "Preview your uploaded data below. Processed leads with personalized messages will appear here."}
+            ? "Processing leads individually... Watch the live updates as each lead is processed in real-time."
+            : "Preview your uploaded data below. Individual processing results will appear here with live updates."}
         </CardDescription>
         
         {isProcessing && csvData.length > 0 && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Batch Progress</span>
-              <span>{totalProcessed}/{csvData.length} leads</span>
+              <span>Live Progress</span>
+              <span>{totalProcessed}/{csvData.length} completed</span>
             </div>
             <Progress value={progressPercentage} className="w-full" />
           </div>
         )}
         
-        {(successCount > 0 || errorCount > 0 || processingCount > 0) && (
+        {(successCount > 0 || errorCount > 0 || processingCount > 0 || pendingCount > 0) && (
           <div className="flex gap-4 text-sm">
             <span className="text-green-600">✅ {successCount} successful</span>
             <span className="text-red-600">❌ {errorCount} errors</span>
             {processingCount > 0 && (
-              <span className="text-blue-600">⏳ {processingCount} processing</span>
+              <span className="text-blue-600">🔄 {processingCount} processing</span>
+            )}
+            {pendingCount > 0 && (
+              <span className="text-gray-600">⏳ {pendingCount} pending</span>
             )}
           </div>
         )}
@@ -91,14 +95,18 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Live Status</TableHead>
                   {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
                   <TableHead>Personalized Message</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {csvData.map((row, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} className={
+                    processingResults.find(r => r.index === index)?.status === 'processing' 
+                      ? 'bg-blue-50 animate-pulse' 
+                      : ''
+                  }>
                     <TableCell>
                       <TooltipProvider>
                         <Tooltip>
@@ -119,6 +127,8 @@ export function ProcessingDashboard({ csvData, processingResults, isProcessing }
                         <div className="text-xs text-muted-foreground truncate">
                           {getPersonalizedMessage(index)}
                         </div>
+                      ) : processingResults.find(r => r.index === index)?.status === 'processing' ? (
+                        <span className="text-xs text-blue-600">Processing...</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">-</span>
                       )}

@@ -38,16 +38,6 @@ export class N8nResponseParser {
 
     let aiResponse = "";
     let searchParameters = undefined;
-    let batchResults = undefined;
-
-    // Check for batch results first
-    if (data.batchResults && Array.isArray(data.batchResults)) {
-      batchResults = data.batchResults;
-      console.log("📊 Found batch results:", batchResults.length);
-    } else if (data.results && Array.isArray(data.results)) {
-      batchResults = data.results;
-      console.log("📊 Found batch results as 'results':", batchResults.length);
-    }
 
     // Strategy 1: Check for direct AI response fields
     if (data.aiResponse) {
@@ -69,39 +59,28 @@ export class N8nResponseParser {
       if (Array.isArray(data.data) && data.data.length > 0) {
         const firstItem = data.data[0];
         aiResponse = firstItem.aiResponse || firstItem.ai_response || firstItem.response || firstItem.output || firstItem.message;
-        
-        // Check if data.data contains batch results
-        if (!batchResults && data.data.every((item: any) => 
-          typeof item === 'object' && 
-          ('index' in item || 'success' in item || 'personalizedMessage' in item)
-        )) {
-          batchResults = data.data;
-          console.log("📊 Found batch results in data array:", batchResults.length);
-        }
       } else if (typeof data.data === 'object') {
         aiResponse = data.data.aiResponse || data.data.ai_response || data.data.response || data.data.output || data.data.message;
       }
     }
 
-    // Generate default response if no AI response found and no batch results
-    if (!aiResponse && !batchResults) {
+    // Generate default response if no AI response found
+    if (!aiResponse) {
       aiResponse = `Ich habe Ihre Anfrage verarbeitet (Request ID: ${requestId}). Die n8n-Workflow-Antwort enthielt keine erkennbare AI-Antwort.`;
       console.log("⚠️ No AI response found in JSON, using fallback");
     }
 
     return {
       success: true,
-      message: batchResults ? "Batch processing completed" : "JSON response received from n8n",
+      message: "JSON response received from n8n",
       aiResponse: aiResponse,
       searchParameters: searchParameters,
-      batchResults: batchResults,
       responseType: responseType,
       debug: {
         requestId,
         rawResponse: data,
         parsedAiResponse: !!aiResponse,
         parsedParameters: !!searchParameters,
-        parsedBatchResults: !!batchResults,
       },
     };
   }
