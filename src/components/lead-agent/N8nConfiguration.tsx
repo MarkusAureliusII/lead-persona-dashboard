@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Settings, TestTube, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Settings, TestTube, CheckCircle, XCircle, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface N8nConfigurationProps {
@@ -12,11 +12,18 @@ interface N8nConfigurationProps {
   onWebhookUrlChange: (url: string) => void;
 }
 
-type ConnectionStatus = 'idle' | 'testing' | 'success' | 'error';
+type ConnectionStatus = 'idle' | 'testing' | 'success' | 'warning' | 'error';
+
+interface TestResult {
+  status: ConnectionStatus;
+  message: string;
+  responseType?: string;
+  details?: string;
+}
 
 export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigurationProps) {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
-  const [lastTestResult, setLastTestResult] = useState<string>("");
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const { toast } = useToast();
 
   const validateWebhookUrl = (url: string): boolean => {
@@ -48,6 +55,7 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
     }
 
     setConnectionStatus('testing');
+    setTestResult(null);
     const testId = `test_${Date.now()}`;
     
     try {
@@ -77,16 +85,97 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
       console.log("🧪 Test response headers:", Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("🧪 Test response data:", data);
+        const contentType = response.headers.get('content-type') || '';
+        console.log("🧪 Content-Type:", contentType);
+
+        let responseData: any;
+        let responseType = 'unknown';
         
-        setConnectionStatus('success');
-        setLastTestResult(`Verbindung erfolgreich (${response.status})`);
-        
-        toast({
-          title: "✅ Verbindung erfolgreich",
-          description: "Die n8n Webhook Verbindung wurde erfolgreich getestet!",
-        });
+        try {
+          if (contentType.includes('application/json')) {
+            responseData = await response.json();
+            responseType = 'JSON';
+          } else if (contentType.includes('text/html')) {
+            responseData = await response.text();
+            responseType = 'HTML';
+          } else {
+            responseData = await response.text();
+            responseType = 'Text';
+          }
+        } catch (parseError) {
+          console.error("Parse error:", parseError);
+          responseData = await response.text();
+          responseType = 'Raw';
+        }
+
+        console.log("🧪 Test response data:", responseData);
+
+        // Analyze the response
+        if (responseType === 'JSON') {
+          setConnectionStatus('success');
+          setTestResult({
+            status: 'success',
+            message: 'Verbindung erfolgreich - JSON Response',
+            responseType: 'JSON',
+            details: 'Ihr n8n-Workflow gibt strukturierte JSON-Daten zurück. Perfekt für die AI-Integration!'
+          });
+          
+          toast({
+            title: "✅ Verbindung erfolgreich",
+            description: "Die n8n Webhook Verbindung wurde erfolgreich getestet! JSON-Response erhalten.",
+          });
+        } else if (responseType === 'HTML') {
+          setConnectionStatus('error');
+          setTestResult({
+            status: 'error',
+            message: 'HTML-Seite statt API-Response',
+            responseType: 'HTML',
+            details: 'Die URL führt zu einer HTML-Seite. Bitte überprüfen Sie, ob Sie die richtige Webhook-URL verwenden.'
+          });
+          
+          toast({
+            title: "❌ Falsche URL",
+            description: "Die URL führt zu einer HTML-Seite statt zu einem n8n-Webhook. Bitte überprüfen Sie die URL.",
+            variant: "destructive",
+          });
+        } else if (responseType === 'Text') {
+          const text = responseData.toString().trim();
+          if (text === "Workflow was started" || text.includes("started")) {
+            setConnectionStatus('warning');
+            setTestResult({
+              status: 'warning',
+              message: 'Workflow gestartet - Keine AI-Response',
+              responseType: 'Text',
+              details: 'Der Workflow wurde gestartet, gibt aber keine AI-Antwort zurück. Für optimale Ergebnisse sollte Ihr Workflow eine JSON-Response mit einem "aiResponse" Feld zurückgeben.'
+            });
+            
+            toast({
+              title: "⚠️ Teilweise erfolgreich",
+              description: "Workflow wurde gestartet, aber keine AI-Response erhalten. Überprüfen Sie Ihre Workflow-Konfiguration.",
+            });
+          } else {
+            setConnectionStatus('success');
+            setTestResult({
+              status: 'success',
+              message: 'Verbindung erfolgreich - Text Response',
+              responseType: 'Text',
+              details: `Text-Response erhalten: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`
+            });
+            
+            toast({
+              title: "✅ Verbindung erfolgreich",
+              description: "Die n8n Webhook Verbindung funktioniert! Text-Response erhalten.",
+            });
+          }
+        } else {
+          setConnectionStatus('warning');
+          setTestResult({
+            status: 'warning',
+            message: 'Unbekanntes Response-Format',
+            responseType: responseType,
+            details: 'Response erhalten, aber Format ist unbekannt.'
+          });
+        }
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -94,7 +183,11 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
       console.error("🧪 Connection test failed:", error);
       
       setConnectionStatus('error');
-      setLastTestResult(error instanceof Error ? error.message : "Unbekannter Fehler");
+      setTestResult({
+        status: 'error',
+        message: 'Verbindung fehlgeschlagen',
+        details: error instanceof Error ? error.message : "Unbekannter Fehler"
+      });
       
       toast({
         title: "❌ Verbindung fehlgeschlagen",
@@ -110,6 +203,8 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
         return <TestTube className="w-4 h-4 animate-spin text-blue-500" />;
       case 'success':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'warning':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       case 'error':
         return <XCircle className="w-4 h-4 text-red-500" />;
       default:
@@ -121,6 +216,8 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
     switch (connectionStatus) {
       case 'success':
         return 'border-green-200 bg-green-50';
+      case 'warning':
+        return 'border-yellow-200 bg-yellow-50';
       case 'error':
         return 'border-red-200 bg-red-50';
       case 'testing':
@@ -167,36 +264,94 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
           </Button>
         </div>
 
-        {lastTestResult && (
-          <div className={`p-3 rounded-lg text-sm ${
-            connectionStatus === 'success' 
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : connectionStatus === 'error'
-              ? 'bg-red-100 text-red-800 border border-red-200'
-              : 'bg-gray-100 text-gray-800 border border-gray-200'
+        {testResult && (
+          <div className={`p-4 rounded-lg border ${
+            testResult.status === 'success' 
+              ? 'bg-green-50 border-green-200'
+              : testResult.status === 'warning'
+              ? 'bg-yellow-50 border-yellow-200'
+              : testResult.status === 'error'
+              ? 'bg-red-50 border-red-200'
+              : 'bg-gray-50 border-gray-200'
           }`}>
-            <div className="flex items-center gap-2">
-              {connectionStatus === 'success' ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : connectionStatus === 'error' ? (
-                <XCircle className="w-4 h-4" />
-              ) : (
-                <AlertCircle className="w-4 h-4" />
-              )}
-              <span className="font-medium">Letzter Test:</span>
-              <span>{lastTestResult}</span>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                {testResult.status === 'success' ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : testResult.status === 'warning' ? (
+                  <AlertCircle className="w-5 h-5 text-yellow-600" />
+                ) : testResult.status === 'error' ? (
+                  <XCircle className="w-5 h-5 text-red-600" />
+                ) : (
+                  <Info className="w-5 h-5 text-gray-600" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-medium ${
+                  testResult.status === 'success' 
+                    ? 'text-green-800'
+                    : testResult.status === 'warning'
+                    ? 'text-yellow-800'
+                    : testResult.status === 'error'
+                    ? 'text-red-800'
+                    : 'text-gray-800'
+                }`}>
+                  {testResult.message}
+                  {testResult.responseType && (
+                    <span className="ml-2 text-xs bg-white px-2 py-1 rounded border">
+                      {testResult.responseType}
+                    </span>
+                  )}
+                </p>
+                {testResult.details && (
+                  <p className={`text-sm mt-1 ${
+                    testResult.status === 'success' 
+                      ? 'text-green-700'
+                      : testResult.status === 'warning'
+                      ? 'text-yellow-700'
+                      : testResult.status === 'error'
+                      ? 'text-red-700'
+                      : 'text-gray-700'
+                  }`}>
+                    {testResult.details}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-medium text-blue-900 mb-2">💡 n8n Workflow Setup Tipps:</h3>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Webhook Trigger: Akzeptiert POST-Requests</li>
-            <li>• Response Format: Sollte 'aiResponse' oder 'response' Feld enthalten</li>
-            <li>• Optional: 'searchParameters' Objekt für strukturierte Daten</li>
-            <li>• Test Payload wird mit 'test: true' Feld gesendet</li>
-          </ul>
+          <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+            <Info className="w-4 h-4" />
+            n8n Workflow Setup Empfehlungen:
+          </h3>
+          <div className="space-y-3 text-sm text-blue-800">
+            <div>
+              <h4 className="font-medium">🎯 Optimale Konfiguration:</h4>
+              <ul className="mt-1 space-y-1">
+                <li>• Webhook Trigger: Akzeptiert POST-Requests</li>
+                <li>• Response Format: JSON mit "aiResponse" Feld</li>
+                <li>• Optional: "searchParameters" Objekt für strukturierte Daten</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium">✅ Unterstützte Response-Formate:</h4>
+              <ul className="mt-1 space-y-1">
+                <li>• JSON: <code>{`{"aiResponse": "Ihre AI-Antwort"}`}</code></li>
+                <li>• Text: Einfache Textantworten werden auch verarbeitet</li>
+                <li>• HTML: Wird erkannt, aber nicht empfohlen</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium">🔧 Troubleshooting:</h4>
+              <ul className="mt-1 space-y-1">
+                <li>• Test-Payload wird mit 'test: true' Feld gesendet</li>
+                <li>• Überprüfen Sie die Logs in n8n für Details</li>
+                <li>• Stellen Sie sicher, dass der Workflow aktiviert ist</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </Card>

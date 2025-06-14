@@ -26,6 +26,7 @@ export interface N8nResponse {
   };
   error?: string;
   debug?: any;
+  responseType?: 'json' | 'text' | 'html' | 'unknown';
 }
 
 export class N8nService {
@@ -61,10 +62,7 @@ export class N8nService {
         throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log("📥 Raw n8n response:", data);
-
-      return this.parseN8nResponse(data, requestId);
+      return await this.parseResponse(response, requestId);
     } catch (error) {
       console.error("❌ Error calling n8n webhook:", error);
       return {
@@ -76,10 +74,44 @@ export class N8nService {
     }
   }
 
-  private parseN8nResponse(data: any, requestId: string): N8nResponse {
-    console.log("🔍 Parsing n8n response:", data);
+  private async parseResponse(response: Response, requestId: string): Promise<N8nResponse> {
+    const contentType = response.headers.get('content-type') || '';
+    console.log("🔍 Response content-type:", contentType);
 
-    // Handle different n8n response formats
+    let responseType: 'json' | 'text' | 'html' | 'unknown' = 'unknown';
+    let rawData: any;
+
+    try {
+      if (contentType.includes('application/json')) {
+        responseType = 'json';
+        rawData = await response.json();
+        console.log("📥 Parsed JSON response:", rawData);
+        return this.parseJsonResponse(rawData, requestId, responseType);
+      } else if (contentType.includes('text/html')) {
+        responseType = 'html';
+        rawData = await response.text();
+        console.log("📥 Received HTML response:", rawData.substring(0, 200) + "...");
+        return this.parseTextResponse(rawData, requestId, responseType);
+      } else {
+        responseType = 'text';
+        rawData = await response.text();
+        console.log("📥 Received text response:", rawData);
+        return this.parseTextResponse(rawData, requestId, responseType);
+      }
+    } catch (parseError) {
+      console.error("❌ Error parsing response:", parseError);
+      return {
+        success: false,
+        message: "Die n8n-Antwort konnte nicht verarbeitet werden. Möglicherweise gibt Ihr Workflow ein unerwartetes Format zurück.",
+        error: `Parse error: ${parseError instanceof Error ? parseError.message : 'Unknown'}`,
+        debug: { requestId, responseType, rawData },
+      };
+    }
+  }
+
+  private parseJsonResponse(data: any, requestId: string, responseType: string): N8nResponse {
+    console.log("🔍 Parsing JSON response:", data);
+
     let aiResponse = "";
     let searchParameters = undefined;
 
@@ -94,15 +126,17 @@ export class N8nService {
       aiResponse = data.output;
     } else if (data.result) {
       aiResponse = data.result;
+    } else if (data.message && typeof data.message === 'string') {
+      aiResponse = data.message;
     }
 
     // Strategy 2: Check for nested response structures (common in n8n)
     if (!aiResponse && data.data) {
       if (Array.isArray(data.data) && data.data.length > 0) {
         const firstItem = data.data[0];
-        aiResponse = firstItem.aiResponse || firstItem.ai_response || firstItem.response || firstItem.output;
+        aiResponse = firstItem.aiResponse || firstItem.ai_response || firstItem.response || firstItem.output || firstItem.message;
       } else if (typeof data.data === 'object') {
-        aiResponse = data.data.aiResponse || data.data.ai_response || data.data.response || data.data.output;
+        aiResponse = data.data.aiResponse || data.data.ai_response || data.data.response || data.data.output || data.data.message;
       }
     }
 
@@ -129,15 +163,16 @@ export class N8nService {
 
     // Generate default response if no AI response found
     if (!aiResponse) {
-      aiResponse = `Ich habe Ihre Anfrage verarbeitet (Request ID: ${requestId}). Die n8n-Workflow-Antwort war: ${JSON.stringify(data).substring(0, 200)}...`;
-      console.log("⚠️ No AI response found, using fallback");
+      aiResponse = `Ich habe Ihre Anfrage verarbeitet (Request ID: ${requestId}). Die n8n-Workflow-Antwort enthielt keine erkennbare AI-Antwort.`;
+      console.log("⚠️ No AI response found in JSON, using fallback");
     }
 
-    const result: N8nResponse = {
+    return {
       success: true,
-      message: "AI Agent Response received",
+      message: "JSON response received from n8n",
       aiResponse: aiResponse,
       searchParameters: searchParameters,
+      responseType: responseType,
       debug: {
         requestId,
         rawResponse: data,
@@ -145,8 +180,65 @@ export class N8nService {
         parsedParameters: !!searchParameters,
       },
     };
+  }
 
-    console.log("✅ Parsed response:", result);
-    return result;
+  private parseTextResponse(data: string, requestId: string, responseType: string): N8nResponse {
+    console.log("🔍 Parsing text response:", data.substring(0, 100) + "...");
+
+    // Try to extract JSON from text response
+    try {
+      const jsonMatch = data.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonData = JSON.parse(jsonMatch[0]);
+        console.log("📥 Found JSON in text response:", jsonData);
+        return this.parseJsonResponse(jsonData, requestId, 'json-in-text');
+      }
+    } catch (e) {
+      console.log("📥 No valid JSON found in text response");
+    }
+
+    // Handle common n8n text responses
+    if (data.includes("Workflow was started")) {
+      return {
+        success: true,
+        message: "n8n Workflow wurde gestartet",
+        aiResponse: "Ihr n8n-Workflow wurde erfolgreich gestartet. Die Verarbeitung läuft im Hintergrund.",
+        responseType: responseType,
+        debug: { requestId, rawResponse: data },
+      };
+    }
+
+    // Handle HTML responses
+    if (responseType === 'html') {
+      return {
+        success: false,
+        message: "n8n hat eine HTML-Seite zurückgegeben",
+        aiResponse: "Ihr n8n-Webhook scheint eine HTML-Seite statt einer API-Antwort zurückzugeben. Bitte überprüfen Sie Ihre Webhook-URL und stellen Sie sicher, dass sie zu einem n8n-Webhook und nicht zu einer Webseite führt.",
+        error: "HTML response received instead of JSON",
+        responseType: responseType,
+        debug: { requestId, rawResponse: data.substring(0, 500) },
+      };
+    }
+
+    // Handle plain text responses
+    if (data.trim().length > 0) {
+      return {
+        success: true,
+        message: "Text response received from n8n",
+        aiResponse: `n8n-Workflow Antwort: ${data.trim()}`,
+        responseType: responseType,
+        debug: { requestId, rawResponse: data },
+      };
+    }
+
+    // Empty response
+    return {
+      success: false,
+      message: "Leere Antwort von n8n erhalten",
+      aiResponse: "Ihr n8n-Workflow hat eine leere Antwort zurückgegeben. Bitte überprüfen Sie Ihre Workflow-Konfiguration.",
+      error: "Empty response",
+      responseType: responseType,
+      debug: { requestId, rawResponse: data },
+    };
   }
 }
