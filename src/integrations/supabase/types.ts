@@ -15,6 +15,7 @@ export type Database = {
           csv_upload_id: string
           error_message: string | null
           id: string
+          language: string | null
           lead_data: Json
           personalized_message: string | null
           processed_at: string | null
@@ -27,6 +28,7 @@ export type Database = {
           csv_upload_id: string
           error_message?: string | null
           id?: string
+          language?: string | null
           lead_data: Json
           personalized_message?: string | null
           processed_at?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           csv_upload_id?: string
           error_message?: string | null
           id?: string
+          language?: string | null
           lead_data?: Json
           personalized_message?: string | null
           processed_at?: string | null
@@ -89,11 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cultural_contexts: {
+        Row: {
+          business_practices: Json | null
+          communication_style: Json | null
+          created_at: string
+          cultural_notes: string | null
+          id: string
+          language: string
+          region: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_practices?: Json | null
+          communication_style?: Json | null
+          created_at?: string
+          cultural_notes?: string | null
+          id?: string
+          language: string
+          region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_practices?: Json | null
+          communication_style?: Json | null
+          created_at?: string
+          cultural_notes?: string | null
+          id?: string
+          language?: string
+          region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       personalization_configs: {
         Row: {
           created_at: string
           csv_upload_id: string
           id: string
+          language: string
           product_service: string
           tonality: string
         }
@@ -101,6 +138,7 @@ export type Database = {
           created_at?: string
           csv_upload_id: string
           id?: string
+          language?: string
           product_service: string
           tonality: string
         }
@@ -108,6 +146,7 @@ export type Database = {
           created_at?: string
           csv_upload_id?: string
           id?: string
+          language?: string
           product_service?: string
           tonality?: string
         }

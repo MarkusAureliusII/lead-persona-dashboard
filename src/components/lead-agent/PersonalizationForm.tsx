@@ -7,6 +7,9 @@ import { Bot } from "lucide-react";
 import { PersonalizationConfig } from "@/types/leadAgent";
 import { UpsellOptions } from "./UpsellOptions";
 import { DataStreamingRestrictions } from "./DataStreamingRestrictions";
+import { LanguageSelector } from "./LanguageSelector";
+import { CulturalContextDisplay } from "./CulturalContextDisplay";
+import { useCulturalContexts } from "@/hooks/useCulturalContexts";
 
 interface PersonalizationFormProps {
   config: PersonalizationConfig;
@@ -14,6 +17,9 @@ interface PersonalizationFormProps {
 }
 
 export function PersonalizationForm({ config, onConfigChange }: PersonalizationFormProps) {
+  const { getCulturalContextByLanguage } = useCulturalContexts();
+  const currentContext = getCulturalContextByLanguage(config.language);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -52,6 +58,13 @@ export function PersonalizationForm({ config, onConfigChange }: PersonalizationF
           </div>
         </CardContent>
       </Card>
+
+      <LanguageSelector
+        selectedLanguage={config.language}
+        onLanguageChange={(language) => onConfigChange({ ...config, language })}
+      />
+
+      <CulturalContextDisplay context={currentContext} />
 
       <UpsellOptions
         options={config.upsellOptions}

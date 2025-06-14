@@ -96,14 +96,15 @@ export function useCsvUpload() {
     }
   };
 
-  const savePersonalizationConfig = async (csvUploadId: string, productService: string, tonality: string) => {
+  const savePersonalizationConfig = async (csvUploadId: string, productService: string, tonality: string, language: string = 'en') => {
     try {
       const { error } = await supabase
         .from('personalization_configs')
         .insert({
           csv_upload_id: csvUploadId,
           product_service: productService,
-          tonality
+          tonality,
+          language
         });
 
       if (error) {
@@ -128,7 +129,8 @@ export function useCsvUpload() {
     rowIndex: number, 
     status: 'pending' | 'processing' | 'success' | 'error',
     personalizedMessage?: string,
-    errorMessage?: string
+    errorMessage?: string,
+    language?: string
   ) => {
     try {
       const updateData: any = {
@@ -142,6 +144,10 @@ export function useCsvUpload() {
 
       if (errorMessage) {
         updateData.error_message = errorMessage;
+      }
+
+      if (language) {
+        updateData.language = language;
       }
 
       const { error } = await supabase

@@ -22,6 +22,7 @@ const LeadAgent = () => {
   const [personalizationConfig, setPersonalizationConfig] = useState<PersonalizationConfig>({
     productService: "",
     tonality: "Professional",
+    language: "en", // Default to English
     upsellOptions: {
       emailVerification: false
     },

@@ -18,7 +18,7 @@ export function useLeadProcessing() {
     personalizationConfig: PersonalizationConfig,
     webhookUrl: string,
     csvUploadId: string | null,
-    savePersonalizationConfig: (csvUploadId: string, productService: string, tonality: string) => Promise<boolean>
+    savePersonalizationConfig: (csvUploadId: string, productService: string, tonality: string, language: string) => Promise<boolean>
   ) => {
     if (!csvData.length || !webhookUrl || !personalizationConfig.productService) {
       toast({
@@ -45,11 +45,12 @@ export function useLeadProcessing() {
       csvUploadId
     });
 
-    // Save personalization config to database
+    // Save personalization config to database with language
     await savePersonalizationConfig(
       csvUploadId, 
       personalizationConfig.productService, 
-      personalizationConfig.tonality
+      personalizationConfig.tonality,
+      personalizationConfig.language
     );
 
     setIsProcessing(true);
@@ -60,7 +61,7 @@ export function useLeadProcessing() {
 
     toast({
       title: "Processing Started",
-      description: `Processing ${csvData.length} leads individually. You'll see real-time updates as each lead is processed.`,
+      description: `Processing ${csvData.length} leads individually in ${personalizationConfig.language}. You'll see real-time updates as each lead is processed.`,
     });
 
     try {
@@ -82,7 +83,8 @@ export function useLeadProcessing() {
             personalizationConfig,
             webhookUrl,
             csvUploadId,
-            updateLeadProcessingResult
+            (csvUploadId, rowIndex, status, personalizedMessage, errorMessage) => 
+              updateLeadProcessingResult(csvUploadId, rowIndex, status, personalizedMessage, errorMessage, personalizationConfig.language)
           );
 
           // Update UI with result
@@ -90,7 +92,7 @@ export function useLeadProcessing() {
             existingResult.index === i ? result : existingResult
           ));
 
-          console.log(`✅ Lead ${i + 1} processed successfully`);
+          console.log(`✅ Lead ${i + 1} processed successfully in ${personalizationConfig.language}`);
         } catch (error) {
           console.error(`❌ Error processing lead ${i + 1}:`, error);
           
@@ -112,7 +114,7 @@ export function useLeadProcessing() {
           
           toast({
             title: "Processing Complete",
-            description: `Processed ${csvData.length} leads. ${successCount} successful, ${errorCount} errors.`,
+            description: `Processed ${csvData.length} leads in ${personalizationConfig.language}. ${successCount} successful, ${errorCount} errors.`,
           });
           
           resolve(current);
