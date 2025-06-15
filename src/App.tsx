@@ -8,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import LeadAgent from "./pages/LeadAgent";
+import Personalization from "./pages/Personalization";
+import Integrations from "./pages/Integrations";
 import Statistics from "./pages/Statistics";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -32,6 +34,16 @@ const App = () => (
             <Route path="/lead-agent" element={
               <ProtectedRoute>
                 <LeadAgent />
+              </ProtectedRoute>
+            } />
+            <Route path="/personalization" element={
+              <ProtectedRoute>
+                <Personalization />
+              </ProtectedRoute>
+            } />
+            <Route path="/integrations" element={
+              <ProtectedRoute>
+                <Integrations />
               </ProtectedRoute>
             } />
             <Route path="/statistics" element={

@@ -9,7 +9,9 @@ import {
   Zap,
   Target,
   MessageSquare,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Wand2,
+  BarChart3
 } from "lucide-react";
 import { useState } from "react";
 import { LeadAgentChat } from "./lead-agent/LeadAgentChat";
@@ -126,12 +128,34 @@ export function Dashboard() {
                 size="lg"
               >
                 <MessageSquare className="w-5 h-5" />
-                <span>Vollständiger Lead Agent</span>
+                <span>Lead Scraping starten</span>
+              </Button>
+            </Link>
+
+            <Link to="/personalization">
+              <Button 
+                variant="outline"
+                className="w-full justify-start space-x-3 h-12"
+                size="lg"
+              >
+                <Wand2 className="w-5 h-5" />
+                <span>Personalisierung verwalten</span>
+              </Button>
+            </Link>
+
+            <Link to="/integrations">
+              <Button 
+                variant="outline"
+                className="w-full justify-start space-x-3 h-12"
+                size="lg"
+              >
+                <Zap className="w-5 h-5" />
+                <span>Integrationen konfigurieren</span>
               </Button>
             </Link>
 
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              💡 <strong>Tipp:</strong> Verwenden Sie den Chat oben für schnelle Lead-Suchen oder besuchen Sie den vollständigen Lead Agent für erweiterte Funktionen.
+              💡 <strong>Tipp:</strong> Verwenden Sie den Chat oben für schnelle Lead-Suchen oder besuchen Sie die dedizierten Bereiche für erweiterte Funktionen.
             </div>
           </CardContent>
         </Card>
