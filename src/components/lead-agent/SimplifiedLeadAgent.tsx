@@ -53,9 +53,9 @@ export function SimplifiedLeadAgent() {
   // Ensure customizations have proper boolean types
   const normalizedCustomizations = {
     ...customizations,
-    autoOpen: Boolean(customizations.autoOpen),
-    showTypingIndicator: Boolean(customizations.showTypingIndicator),
-    allowFileUpload: Boolean(customizations.allowFileUpload)
+    autoOpen: customizations.autoOpen === 'true' || customizations.autoOpen === true,
+    showTypingIndicator: customizations.showTypingIndicator === 'true' || customizations.showTypingIndicator === true,
+    allowFileUpload: customizations.allowFileUpload === 'true' || customizations.allowFileUpload === true
   };
 
   if (!isAnyChatConfigured) {
