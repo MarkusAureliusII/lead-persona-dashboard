@@ -1,6 +1,6 @@
 
 export interface N8nWebhookPayload {
-  message: string;
+  prompt: string;
   targetAudience: {
     industry: string;
     companySize: string;

@@ -119,7 +119,7 @@ export function useChatMessages({
     try {
       const n8nService = new N8nService(webhookUrl, { timeout: 15000 });
       const response = await n8nService.sendMessage({
-        message: inputValue,
+        prompt: inputValue, // <-- SEND AS 'prompt' instead of 'message'
         targetAudience,
         timestamp: new Date().toISOString(),
       });
