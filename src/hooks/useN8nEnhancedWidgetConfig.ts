@@ -24,7 +24,17 @@ export function useN8nEnhancedWidgetConfig() {
     const stored = localStorage.getItem("n8n-enhanced-widget-customizations");
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        // Ensure boolean values are properly converted
+        return {
+          theme: parsed.theme || 'light',
+          position: parsed.position || 'bottom-right',
+          welcomeMessage: parsed.welcomeMessage || 'Hallo! 👋 Ich bin Ihr KI-gestützter Lead-Agent. Wie kann ich Ihnen bei der Lead-Generierung helfen?',
+          language: parsed.language || 'de',
+          autoOpen: Boolean(parsed.autoOpen),
+          showTypingIndicator: Boolean(parsed.showTypingIndicator !== false), // default to true
+          allowFileUpload: Boolean(parsed.allowFileUpload)
+        };
       } catch (error) {
         console.error('Error parsing stored enhanced customizations:', error);
       }
