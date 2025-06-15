@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, TestTube } from "lucide-react";
+import { MessageSquare, Settings as SettingsIcon } from "lucide-react";
 import { useN8nConfig } from "@/hooks/useN8nConfig"; 
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,8 +12,7 @@ export function N8nChatSettings() {
   const { 
     isEnabled, 
     setIsEnabled, 
-    webhookUrl, 
-    setWebhookUrl, 
+    webhookUrl,
     customizations, 
     setCustomizations 
   } = useN8nConfig();
@@ -22,7 +21,7 @@ export function N8nChatSettings() {
 
   const handleTestConnection = async () => {
     if (!webhookUrl) {
-        toast({ title: "Fehler", description: "Bitte eine Webhook URL eingeben.", variant: "destructive" });
+        toast({ title: "Webhook nicht konfiguriert", description: "Bitte konfiguriere den KI-Chat-Webhook in den N8N Webhook-Einstellungen.", variant: "destructive" });
         return;
     }
     toast({ title: "Test gesendet", description: "Überprüfe deinen n8n-Workflow auf eingehende Daten." });
@@ -53,21 +52,25 @@ export function N8nChatSettings() {
 
         {isEnabled && (
           <div className="space-y-4 pt-4 border-t">
-            <div>
-              <Label htmlFor="webhookUrl">n8n Chat Webhook URL</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  id="webhookUrl"
-                  placeholder="Deine n8n Chat Webhook URL"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                />
-                <Button variant="outline" onClick={handleTestConnection}>
-                   <TestTube className="w-4 h-4 mr-2" />
-                   Testen
-                </Button>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <SettingsIcon className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">Webhook-Konfiguration</span>
               </div>
+              <p className="text-sm text-blue-700">
+                Die Webhook-URL für das Chat-Widget wird über die <strong>N8N Webhooks</strong> in den Einstellungen konfiguriert.
+                {webhookUrl ? (
+                  <span className="block mt-1 text-green-700">✓ Webhook ist konfiguriert und bereit</span>
+                ) : (
+                  <span className="block mt-1 text-orange-700">⚠ Noch kein Webhook konfiguriert</span>
+                )}
+              </p>
+              <Button variant="outline" size="sm" onClick={handleTestConnection} className="mt-2">
+                <SettingsIcon className="w-4 h-4 mr-2" />
+                Webhook testen
+              </Button>
             </div>
+            
             <div>
               <Label htmlFor="welcomeMessage">Willkommensnachricht</Label>
               <Input

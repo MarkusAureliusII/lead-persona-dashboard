@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useWebhookStorageLocal } from './useWebhookStorageLocal';
 
 export interface N8nChatCustomizations {
   theme: 'light' | 'dark' | 'auto';
@@ -12,13 +13,22 @@ export interface N8nChatCustomizations {
 }
 
 export function useN8nConfig() {
+  const { webhookSettings } = useWebhookStorageLocal();
+  
   const [isEnabled, setIsEnabled] = useState(() => 
     localStorage.getItem("n8n:widget:enabled") === "true"
   );
 
-  const [webhookUrl, setWebhookUrl] = useState(() =>
-    localStorage.getItem("n8n:widget:url") || "https://n8n-selfhost-u40339.vm.elestio.app/webhook/fa996958-1ecc-4644-bb93-34f060a170a3/chat"
-  );
+  // Use webhook from central settings, fallback to old localStorage or hardcoded URL
+  const webhookUrl = webhookSettings.ai_chat_webhook || 
+    localStorage.getItem("n8n:widget:url") || 
+    "";
+
+  const setWebhookUrl = (url: string) => {
+    // This function is deprecated - webhooks should be set via Settings page
+    console.warn("setWebhookUrl is deprecated. Please use Settings page to configure webhooks.");
+    localStorage.setItem("n8n:widget:url", url);
+  };
 
   const [customizations, setCustomizations] = useState<N8nChatCustomizations>(() => {
     const stored = localStorage.getItem("n8n:widget:customizations");
@@ -42,9 +52,7 @@ export function useN8nConfig() {
     localStorage.setItem("n8n:widget:enabled", String(isEnabled));
   }, [isEnabled]);
 
-  useEffect(() => {
-    localStorage.setItem("n8n:widget:url", webhookUrl);
-  }, [webhookUrl]);
+  // Remove the useEffect for webhookUrl since it's now managed centrally
 
   useEffect(() => {
     localStorage.setItem("n8n:widget:customizations", JSON.stringify(customizations));

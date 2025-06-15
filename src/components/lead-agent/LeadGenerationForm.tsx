@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { SlidersHorizontal, Rocket, X, Copy, Check } from "lucide-react";
-import { useN8nConfig } from '@/hooks/useN8nConfig';
+import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { Badge } from '@/components/ui/badge';
 
 // Vollständige Berufspakete basierend auf dem Prompt
@@ -89,7 +89,7 @@ const industryIds: Record<string, string> = {
 };
 
 export function LeadGenerationForm() {
-  const { webhookUrl: globalWebhookUrl } = useN8nConfig();
+  const { webhookSettings } = useWebhookStorageLocal();
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   
@@ -104,8 +104,7 @@ export function LeadGenerationForm() {
   
   const [formData, setFormData] = useState({
     keywords: '',
-    leadCount: 500,
-    formWebhookUrl: ''
+    leadCount: 500
   });
   
   const [generatedLink, setGeneratedLink] = useState('');
@@ -279,11 +278,11 @@ export function LeadGenerationForm() {
       return;
     }
 
-    const finalWebhookUrl = formData.formWebhookUrl || globalWebhookUrl;
+    const finalWebhookUrl = webhookSettings.lead_scraping_webhook || webhookSettings.global_webhook_url;
     if (!finalWebhookUrl) {
       toast({ 
         title: "Konfiguration fehlt", 
-        description: "Bitte Webhook-URL in den Einstellungen konfigurieren oder hier eingeben.", 
+        description: "Bitte Lead-Scraping Webhook in den Einstellungen konfigurieren.", 
         variant: "destructive"
       });
       return;
@@ -490,35 +489,24 @@ export function LeadGenerationForm() {
           </div>
 
           {/* Schritt 6: Lead-Anzahl */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="lead-count" className="text-base font-semibold mb-3 block">
-                6. Anzahl Leads
-              </Label>
-              <Input 
-                id="lead-count" 
-                type="number" 
-                min="500" 
-                step="100" 
-                value={formData.leadCount} 
-                onChange={e => setFormData(prev => ({ 
-                  ...prev, 
-                  leadCount: Math.max(500, parseInt(e.target.value, 10) || 500)
-                }))} 
-              />
-              <p className="text-sm text-muted-foreground mt-1">Minimum: 500 Leads</p>
-            </div>
-            <div>
-              <Label htmlFor="form-webhook">
-                Webhook-URL (optional)
-              </Label>
-              <Input 
-                id="form-webhook" 
-                placeholder="Standard-URL aus Einstellungen..." 
-                value={formData.formWebhookUrl}
-                onChange={e => setFormData(prev => ({ ...prev, formWebhookUrl: e.target.value }))}
-              />
-            </div>
+          <div>
+            <Label htmlFor="lead-count" className="text-base font-semibold mb-3 block">
+              6. Anzahl Leads
+            </Label>
+            <Input 
+              id="lead-count" 
+              type="number" 
+              min="500" 
+              step="100" 
+              value={formData.leadCount} 
+              onChange={e => setFormData(prev => ({ 
+                ...prev, 
+                leadCount: Math.max(500, parseInt(e.target.value, 10) || 500)
+              }))} 
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Minimum: 500 Leads • Webhook wird aus Einstellungen geladen
+            </p>
           </div>
 
           <Button 
