@@ -625,6 +625,11 @@ function LeadGroupCard({
     };
     
     try {
+      // Validate webhook URL first
+      if (!localWebhookUrl || !localWebhookUrl.startsWith('http')) {
+        throw new Error('Invalid webhook URL. Please enter a valid HTTP/HTTPS URL.');
+      }
+
       console.log('🚀 Sending batch payload to n8n:', {
         scrape_job_id: batchPayload.scrape_job_id,
         scrape_job_name: batchPayload.scrape_job_name,
@@ -633,18 +638,31 @@ function LeadGroupCard({
         batchSize: batchPayload.batchSize,
         leadsCount: batchPayload.leads.length,
         firstLead: batchPayload.leads[0], // Show first lead as example
-        webhookUrl: localWebhookUrl
+        webhookUrl: localWebhookUrl,
+        payloadSize: `${Math.round(JSON.stringify(batchPayload).length / 1024)} KB`
       });
-      
+
+      // Add timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error('❌ Request timed out after 30 seconds');
+      }, 30000); // 30 second timeout
+
       const response = await fetch(localWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Batch-Mode': 'true',
           'X-Batch-Size': batchPayload.batchSize.toString(),
+          'Accept': 'application/json',
+          'User-Agent': 'Lead-Persona-Dashboard/1.0',
         },
-        body: JSON.stringify(batchPayload)
+        body: JSON.stringify(batchPayload),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
       
       console.log('📡 Response status:', response.status, response.statusText);
       console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
@@ -666,11 +684,38 @@ function LeadGroupCard({
       
     } catch (error) {
       console.error('❌ Failed to send batch webhook:', error);
-      console.log('Failed batch payload:', JSON.stringify(batchPayload, null, 2));
+      
+      let errorMessage = 'Unbekannter Fehler';
+      let errorDetails = '';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Provide specific guidance based on error type
+        if (error.name === 'AbortError') {
+          errorMessage = 'Request timed out after 30 seconds';
+          errorDetails = 'The n8n webhook took too long to respond. Check if n8n is running and accessible.';
+        } else if (errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
+          errorDetails = 'Cannot reach the webhook URL. Check if: 1) n8n is running, 2) URL is correct, 3) CORS is configured, 4) no firewall blocking.';
+        } else if (errorMessage.includes('CORS')) {
+          errorDetails = 'CORS error: Your n8n webhook needs to allow requests from this domain.';
+        } else if (errorMessage.includes('SSL') || errorMessage.includes('certificate')) {
+          errorDetails = 'SSL/Certificate error: Try using HTTP instead of HTTPS for testing.';
+        }
+      }
+
+      console.log('🔍 Debugging info:', {
+        errorType: error?.constructor?.name,
+        errorMessage,
+        webhookUrl: localWebhookUrl,
+        payloadSize: `${Math.round(JSON.stringify(batchPayload).length / 1024)} KB`,
+        leadsCount: batchPayload.leads.length,
+        timestamp: new Date().toISOString()
+      });
       
       toast({
         title: "Fehler beim Senden der Batch-Anfrage",
-        description: `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        description: errorDetails || errorMessage,
         variant: "destructive"
       });
     }
