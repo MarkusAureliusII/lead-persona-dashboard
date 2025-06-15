@@ -20,34 +20,30 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  console.log('App component rendering');
-  
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/lead-agent" element={<ProtectedRoute><LeadAgent /></ProtectedRoute>} />
-              <Route path="/personalization" element={<ProtectedRoute><Personalization /></ProtectedRoute>} />
-              <Route path="/lead/:leadId" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
-              <Route path="/crm" element={<ProtectedRoute><Crm /></ProtectedRoute>} />
-              <Route path="/scraping-jobs" element={<ProtectedRoute><ScrapingJobs /></ProtectedRoute>} />
-              <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-              <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/lead-agent" element={<ProtectedRoute><LeadAgent /></ProtectedRoute>} />
+            <Route path="/personalization" element={<ProtectedRoute><Personalization /></ProtectedRoute>} />
+            <Route path="/lead/:leadId" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
+            <Route path="/crm" element={<ProtectedRoute><Crm /></ProtectedRoute>} />
+            <Route path="/scraping-jobs" element={<ProtectedRoute><ScrapingJobs /></ProtectedRoute>} />
+            <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
+            <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;
