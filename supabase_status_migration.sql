@@ -1,46 +1,30 @@
--- Lead Status System Migration
--- Run this in Supabase SQL Editor
+-- Migration: Ersetze status-Spalte durch boolesche Anreicherungsfortschritt-Spalten
+-- Datum: 2025-06-15
+-- Für Supabase SQL Editor
 
--- 1. Check current status distribution
-SELECT 'Current Status Distribution:' as info;
-SELECT status, COUNT(*) as count 
-FROM leads 
-GROUP BY status 
-ORDER BY count DESC;
-
--- 2. Update existing records to new status system
-UPDATE leads 
-SET status = CASE 
-  WHEN status = 'qualified' THEN 'ready_for_outreach'
-  WHEN status = 'contacted' THEN 'contacted'
-  WHEN status = 'new' THEN 'new'
-  ELSE 'new'  -- Default fallback for any unexpected values
-END;
-
--- 3. Verify the update
-SELECT 'After Update:' as info;
-SELECT status, COUNT(*) as count 
-FROM leads 
-GROUP BY status 
-ORDER BY count DESC;
-
--- 4. Add constraint for valid status values (recommended)
+-- 1. Füge neue boolesche Spalten hinzu (alle mit DEFAULT false)
 ALTER TABLE leads 
-DROP CONSTRAINT IF EXISTS leads_status_check;
+ADD COLUMN is_personal_linkedin_analyzed BOOLEAN DEFAULT false;
 
+-- 2. Füge Email-Verifizierung-Status hinzu
 ALTER TABLE leads 
-ADD CONSTRAINT leads_status_check 
-CHECK (status IN (
-  'new', 
-  'email_verified', 
-  'enriched', 
-  'personalized', 
-  'ready_for_outreach', 
-  'contacted'
-));
+ADD COLUMN is_email_verified BOOLEAN DEFAULT false;
 
--- 5. Set default value for new records
+-- 3. Füge Company LinkedIn Analyse-Status hinzu
 ALTER TABLE leads 
-ALTER COLUMN status SET DEFAULT 'new';
+ADD COLUMN is_company_linkedin_analyzed BOOLEAN DEFAULT false;
 
-SELECT 'Migration completed successfully!' as result;
+-- 4. Füge Website-Analyse-Status hinzu
+ALTER TABLE leads 
+ADD COLUMN is_website_analyzed BOOLEAN DEFAULT false;
+
+-- 5. Füge Custom Field 1 Analyse-Status hinzu (Platzhalter für zukünftige Checks)
+ALTER TABLE leads 
+ADD COLUMN is_custom_field_1_analyzed BOOLEAN DEFAULT false;
+
+-- 6. Entferne die alte status-Spalte
+ALTER TABLE leads 
+DROP COLUMN status;
+
+-- Migration abgeschlossen
+-- Die Tabelle verwendet jetzt granulare boolesche Felder statt einem generischen Status

@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import LeadAgent from "./pages/LeadAgent";
 import Personalization from "./pages/Personalization";
+import LeadDetail from "./pages/LeadDetail";
 import Crm from "./pages/Crm";
 import ScrapingJobs from "./pages/ScrapingJobs";
 import Integrations from "./pages/Integrations";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/lead-agent" element={<ProtectedRoute><LeadAgent /></ProtectedRoute>} />
             <Route path="/personalization" element={<ProtectedRoute><Personalization /></ProtectedRoute>} />
+            <Route path="/lead/:leadId" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
             <Route path="/crm" element={<ProtectedRoute><Crm /></ProtectedRoute>} />
             <Route path="/scraping-jobs" element={<ProtectedRoute><ScrapingJobs /></ProtectedRoute>} />
             <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />

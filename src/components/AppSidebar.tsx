@@ -35,7 +35,7 @@ const menuItems = [
     icon: Bot,
   },
   {
-    title: "Posteingang",
+    title: "Scraping-Protokoll",
     url: "/personalization",
     icon: Inbox,
   },
