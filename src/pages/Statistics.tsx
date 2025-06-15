@@ -26,7 +26,10 @@ type Statistics = {
   personalizationRate: number;
   conversionRate: number;
   newLeads: number;
-  qualifiedLeads: number;
+  emailVerifiedLeads: number;
+  enrichedLeads: number;
+  personalizedLeads: number;
+  readyForOutreachLeads: number;
   contactedLeads: number;
   validEmails: number;
   totalScrapeJobs: number;
@@ -39,7 +42,10 @@ const Statistics = () => {
     personalizationRate: 0,
     conversionRate: 0,
     newLeads: 0,
-    qualifiedLeads: 0,
+    emailVerifiedLeads: 0,
+    enrichedLeads: 0,
+    personalizedLeads: 0,
+    readyForOutreachLeads: 0,
     contactedLeads: 0,
     validEmails: 0,
     totalScrapeJobs: 0
@@ -61,7 +67,10 @@ const Statistics = () => {
         totalLeadsResult,
         mailingListResult,
         newLeadsResult,
-        qualifiedLeadsResult,
+        emailVerifiedResult,
+        enrichedResult,
+        personalizedResult,
+        readyForOutreachResult,
         contactedLeadsResult,
         validEmailsResult,
         scrapeJobsResult
@@ -75,8 +84,17 @@ const Statistics = () => {
         // New Leads (Status = new)
         supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'new'),
         
-        // Qualified Leads (Status = qualified)
-        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'qualified'),
+        // Email Verified Leads
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'email_verified'),
+        
+        // Enriched Leads
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'enriched'),
+        
+        // Personalized Leads
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'personalized'),
+        
+        // Ready for Outreach Leads
+        supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'ready_for_outreach'),
         
         // Contacted Leads (Status = contacted)
         supabase.from('leads').select('*', { count: 'exact', head: true }).eq('status', 'contacted'),
@@ -93,7 +111,10 @@ const Statistics = () => {
         totalLeadsResult.error,
         mailingListResult.error,
         newLeadsResult.error,
-        qualifiedLeadsResult.error,
+        emailVerifiedResult.error,
+        enrichedResult.error,
+        personalizedResult.error,
+        readyForOutreachResult.error,
         contactedLeadsResult.error,
         validEmailsResult.error,
         scrapeJobsResult.error
@@ -107,16 +128,18 @@ const Statistics = () => {
       const totalLeads = totalLeadsResult.count || 0;
       const contactedLeads = contactedLeadsResult.count || 0;
       const newLeads = newLeadsResult.count || 0;
-      const qualifiedLeads = qualifiedLeadsResult.count || 0;
+      const emailVerifiedLeads = emailVerifiedResult.count || 0;
+      const enrichedLeads = enrichedResult.count || 0;
+      const personalizedLeads = personalizedResult.count || 0;
+      const readyForOutreachLeads = readyForOutreachResult.count || 0;
       const validEmails = validEmailsResult.count || 0;
       const totalScrapeJobs = scrapeJobsResult.count || 0;
 
-      // Personalization Rate: Prozentsatz der Leads, die nicht mehr "new" sind
-      const processedLeads = totalLeads - newLeads;
-      const personalizationRate = totalLeads > 0 ? Math.round((processedLeads / totalLeads) * 100) : 0;
+      // Personalization Rate: Prozentsatz der Leads, die personalisiert wurden
+      const personalizationRate = totalLeads > 0 ? Math.round((personalizedLeads / totalLeads) * 100) : 0;
 
-      // Conversion Rate: Verhältnis von contacted zu qualified
-      const conversionRate = qualifiedLeads > 0 ? Math.round((contactedLeads / qualifiedLeads) * 100) : 0;
+      // Conversion Rate: Verhältnis von contacted zu ready_for_outreach
+      const conversionRate = readyForOutreachLeads > 0 ? Math.round((contactedLeads / readyForOutreachLeads) * 100) : 0;
 
       const newStats: Statistics = {
         totalLeadsScraped: totalLeads,
@@ -124,7 +147,10 @@ const Statistics = () => {
         personalizationRate,
         conversionRate,
         newLeads,
-        qualifiedLeads,
+        emailVerifiedLeads,
+        enrichedLeads,
+        personalizedLeads,
+        readyForOutreachLeads,
         contactedLeads,
         validEmails,
         totalScrapeJobs
@@ -266,7 +292,7 @@ const Statistics = () => {
                       <CardContent>
                         <div className="text-2xl font-bold text-orange-600">{stats.conversionRate}%</div>
                         <p className="text-xs text-muted-foreground">
-                          {stats.contactedLeads} von {stats.qualifiedLeads} qualifizierten Leads
+                          {stats.contactedLeads} von {stats.readyForOutreachLeads} outreach-bereiten Leads
                         </p>
                       </CardContent>
                     </Card>
@@ -286,11 +312,41 @@ const Statistics = () => {
 
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Qualifizierte Leads</CardTitle>
+                        <CardTitle className="text-sm font-medium">E-Mail Verifiziert</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold text-green-600">{stats.qualifiedLeads}</div>
-                        <p className="text-xs text-muted-foreground">Im CRM verfügbar</p>
+                        <div className="text-2xl font-bold text-blue-600">{stats.emailVerifiedLeads}</div>
+                        <p className="text-xs text-muted-foreground">Gültige E-Mails</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Angereichert</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-indigo-600">{stats.enrichedLeads}</div>
+                        <p className="text-xs text-muted-foreground">Mit Zusatzdaten</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Personalisiert</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-green-600">{stats.personalizedLeads}</div>
+                        <p className="text-xs text-muted-foreground">KI-bearbeitet</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">CRM-Ready</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold text-teal-600">{stats.readyForOutreachLeads}</div>
+                        <p className="text-xs text-muted-foreground">Outreach-bereit</p>
                       </CardContent>
                     </Card>
 
@@ -344,15 +400,48 @@ const Statistics = () => {
                         <div className="text-amber-600 font-bold text-xl">{stats.newLeads}</div>
                       </div>
                       
+                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                          <div>
+                            <p className="font-medium">E-Mail Verifiziert</p>
+                            <p className="text-sm text-gray-600">Gültige E-Mail-Adressen</p>
+                          </div>
+                        </div>
+                        <div className="text-blue-600 font-bold text-xl">{stats.emailVerifiedLeads}</div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                          <div>
+                            <p className="font-medium">Angereichert</p>
+                            <p className="text-sm text-gray-600">LinkedIn/Website-Daten hinzugefügt</p>
+                          </div>
+                        </div>
+                        <div className="text-indigo-600 font-bold text-xl">{stats.enrichedLeads}</div>
+                      </div>
+                      
                       <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                           <div>
-                            <p className="font-medium">Qualifizierte Leads (CRM)</p>
-                            <p className="text-sm text-gray-600">Bereit für Outreach</p>
+                            <p className="font-medium">Personalisiert</p>
+                            <p className="text-sm text-gray-600">KI-Personalisierung abgeschlossen</p>
                           </div>
                         </div>
-                        <div className="text-green-600 font-bold text-xl">{stats.qualifiedLeads}</div>
+                        <div className="text-green-600 font-bold text-xl">{stats.personalizedLeads}</div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-4 bg-teal-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                          <div>
+                            <p className="font-medium">CRM-Ready</p>
+                            <p className="text-sm text-gray-600">Bereit für Outreach-Kampagnen</p>
+                          </div>
+                        </div>
+                        <div className="text-teal-600 font-bold text-xl">{stats.readyForOutreachLeads}</div>
                       </div>
                       
                       <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">

@@ -850,7 +850,7 @@ const Personalization = () => {
             started_at
           )
         `)
-        .eq('status', 'new')  // Nur neue, unbearbeitete Leads
+        .in('status', ['new', 'email_verified', 'enriched', 'personalized'])  // Alle Leads im Personalisierungsprozess
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -1107,10 +1107,10 @@ const Personalization = () => {
                   <CardContent className="flex flex-col items-center justify-center h-64">
                     <Users className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                      Posteingang ist leer
+                      Keine Leads im Posteingang
                     </h3>
                     <p className="text-muted-foreground text-center mb-4">
-                      {errorMessage ? 'Fehler beim Laden der Daten.' : 'Keine neuen Leads zur Bearbeitung vorhanden. Alle Leads wurden bereits verarbeitet.'}
+                      {errorMessage ? 'Fehler beim Laden der Daten.' : 'Alle Leads wurden bereits personalisiert oder es wurden noch keine Leads gescraped.'}
                     </p>
                     <div className="flex gap-2">
                       <Button onClick={fetchLeads} variant="outline">
