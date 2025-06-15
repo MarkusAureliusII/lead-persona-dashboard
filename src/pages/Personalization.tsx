@@ -28,7 +28,7 @@ function LeadCard({ lead }: { lead: Lead }) {
   const handleEnrichment = (serviceName: string) => {
     toast({
       title: "Anreicherung gestartet (Simulation)",
-      description: `${serviceName} für ${lead.full_name} wird ausgeführt.`,
+      description: `${serviceName} für ${lead.full_name || 'diesen Lead'} wird ausgeführt.`,
     });
     // Hier würde die echte API-Anfrage für den Service gestartet
   };
@@ -82,11 +82,11 @@ const Personalization = () => {
         .from('leads')
         .select('id, full_name, title, company_name, location, is_email_verified, website_analysis_summary')
         .order('created_at', { ascending: false })
-        .limit(100); // Lade die letzten 100 Leads
+        .limit(100);
 
       if (error) {
         console.error("Fehler beim Laden der Leads:", error);
-      } else {
+      } else if (data) {
         setLeads(data as Lead[]);
       }
       setIsLoading(false);
@@ -103,15 +103,13 @@ const Personalization = () => {
           <Header />
           <main className="flex-1 p-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    <Wand2 /> Personalization
-                  </h1>
-                  <p className="text-gray-600">
-                    Veredle deine Leads mit zusätzlichen Daten aus verschiedenen Quellen.
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <Wand2 /> Personalization
+                </h1>
+                <p className="text-gray-600">
+                  Veredle deine Leads mit zusätzlichen Daten aus verschiedenen Quellen.
+                </p>
               </div>
 
               <Card>
