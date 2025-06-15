@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -28,7 +30,8 @@ import {
   Play,
   Trash2,
   Filter,
-  X
+  X,
+  Link
 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
@@ -231,7 +234,7 @@ function LeadCard({
         </div>
 
         {/* Firmendaten - aufklappbar */}
-        {(getCompany() || getLocation() || getCompanyLinkedInUrl()) && (
+        {(getCompany() || getLocation() || getCompanyLinkedInUrl() || getWebsite()) && (
           <div className="border-t pt-3">
             <Collapsible open={showCompanyDetails} onOpenChange={setShowCompanyDetails}>
               <CollapsibleTrigger asChild>
@@ -267,6 +270,20 @@ function LeadCard({
                     </div>
                   )}
                   
+                  {getWebsite() && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe size={12} className="text-purple-600" />
+                      <a 
+                        href={getWebsite()} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-purple-600 hover:underline flex items-center gap-1"
+                      >
+                        Website besuchen <ExternalLink size={10} />
+                      </a>
+                    </div>
+                  )}
+                  
                   {getCompanyLinkedInUrl() && (
                     <div className="flex items-center gap-2 text-sm">
                       <Linkedin size={12} className="text-blue-600" />
@@ -294,16 +311,20 @@ function LeadCard({
 function PersonalizationOptionsCard({ 
   options, 
   filterOptions,
+  webhookUrl,
   onOptionsChange,
   onFilterChange,
+  onWebhookUrlChange,
   onStartPersonalization,
   totalLeads,
   filteredCount
 }: { 
   options: PersonalizationOptions;
   filterOptions: FilterOptions;
+  webhookUrl: string;
   onOptionsChange: (newOptions: PersonalizationOptions) => void;
   onFilterChange: (newFilters: FilterOptions) => void;
+  onWebhookUrlChange: (url: string) => void;
   onStartPersonalization: () => void;
   totalLeads: number;
   filteredCount: number;
@@ -335,17 +356,50 @@ function PersonalizationOptionsCard({
       });
       return;
     }
-    
-    toast({
-      title: "Personalisierung gestartet",
-      description: `Verarbeite ${filteredCount} Leads mit den ausgewählten Optionen.`
-    });
+
+    if (!webhookUrl) {
+      toast({
+        title: "Webhook URL fehlt",
+        description: "Bitte gib eine Webhook URL ein.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     onStartPersonalization();
   };
 
   return (
     <div className="space-y-4">
+      {/* Webhook URL Eingabe */}
+      <Card className="bg-gray-50 border-gray-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+            <Link className="w-5 h-5" />
+            Webhook URL (Test)
+          </CardTitle>
+          <CardDescription className="text-gray-600">
+            Gib die Webhook URL ein, an die die Leads gesendet werden sollen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="webhook-url">Webhook URL</Label>
+            <Input
+              id="webhook-url"
+              type="url"
+              placeholder="https://your-webhook.com/endpoint"
+              value={webhookUrl}
+              onChange={(e) => onWebhookUrlChange(e.target.value)}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-gray-500">
+              Die Leads werden als JSON POST Request an diese URL gesendet.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Personalisierungs-Optionen */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader className="pb-3">
@@ -483,7 +537,7 @@ function PersonalizationOptionsCard({
       <div className="flex justify-center">
         <Button 
           onClick={handleStart}
-          disabled={!hasSelectedOptions || filteredCount === 0}
+          disabled={!hasSelectedOptions || filteredCount === 0 || !webhookUrl}
           size="lg"
           className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
         >
@@ -500,13 +554,18 @@ function LeadGroupCard({
   group, 
   isExpanded, 
   onToggle,
-  onUpdateGroup
+  onUpdateGroup,
+  webhookUrl
 }: { 
   group: LeadGroup; 
   isExpanded: boolean; 
   onToggle: () => void; 
   onUpdateGroup: (updatedGroup: LeadGroup) => void;
+  webhookUrl: string;
 }) {
+  const { toast } = useToast();
+  const [localWebhookUrl, setLocalWebhookUrl] = useState(webhookUrl);
+
   const handlePersonalizationOptionsChange = (newOptions: PersonalizationOptions) => {
     onUpdateGroup({
       ...group,
@@ -538,10 +597,83 @@ function LeadGroupCard({
     });
   };
 
-  const handleStartPersonalization = () => {
+  const handleStartPersonalization = async () => {
     console.log('Starting personalization for group:', group.scrape_job_id);
     console.log('Options:', group.personalizationOptions);
     console.log('Leads to process:', group.filteredLeads.length);
+    console.log('Webhook URL:', localWebhookUrl);
+    
+    // Webhook payload erstellen
+    const webhookPayload = {
+      scrape_job_id: group.scrape_job_id,
+      scrape_job_name: group.scrape_job_name,
+      personalization_options: {
+        email_validation: group.personalizationOptions.emailValidation,
+        private_linkedin_analysis: group.personalizationOptions.privateLinkedInAnalysis,
+        company_linkedin_analysis: group.personalizationOptions.companyLinkedInAnalysis,
+        website_analysis: group.personalizationOptions.websiteAnalysis
+      },
+      leads: group.filteredLeads.map(lead => ({
+        id: lead.id,
+        first_name: lead.first_name || lead.raw_scraped_data?.firstName || '',
+        last_name: lead.last_name || lead.raw_scraped_data?.lastName || '',
+        email: lead.email || lead.raw_scraped_data?.email || null,
+        phone: lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null,
+        company_name: lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null,
+        title: lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null,
+        website: lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url || null,
+        location: {
+          city: lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location || null,
+          state: lead.state || lead.raw_scraped_data?.state || null,
+          country: lead.country || lead.raw_scraped_data?.country || null
+        },
+        linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin || null,
+        company_linkedin_url: lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl || null,
+        raw_data: lead.raw_scraped_data
+      })),
+      total_leads: group.filteredLeads.length,
+      timestamp: new Date().toISOString()
+    };
+    
+    try {
+      toast({
+        title: "Sende Daten...",
+        description: "Die Leads werden an den Webhook gesendet.",
+      });
+
+      const response = await fetch(localWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Webhook responded with status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Webhook response:', result);
+      
+      toast({
+        title: "Personalisierung gestartet",
+        description: `${group.filteredLeads.length} Leads wurden erfolgreich zur Verarbeitung gesendet.`,
+        variant: "default"
+      });
+      
+    } catch (error) {
+      console.error('Webhook error:', error);
+      
+      // Log the payload to console for debugging
+      console.log('Failed webhook payload:', JSON.stringify(webhookPayload, null, 2));
+      
+      toast({
+        title: "Fehler beim Senden",
+        description: `Die Leads konnten nicht gesendet werden: ${error.message}. Payload wurde in die Konsole geloggt.`,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteLead = (leadId: string) => {
@@ -621,8 +753,10 @@ function LeadGroupCard({
               <PersonalizationOptionsCard
                 options={group.personalizationOptions}
                 filterOptions={group.filterOptions}
+                webhookUrl={localWebhookUrl}
                 onOptionsChange={handlePersonalizationOptionsChange}
                 onFilterChange={handleFilterChange}
+                onWebhookUrlChange={setLocalWebhookUrl}
                 onStartPersonalization={handleStartPersonalization}
                 totalLeads={visibleLeads.length}
                 filteredCount={group.filteredLeads.length}
@@ -665,6 +799,7 @@ const Personalization = () => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [globalWebhookUrl, setGlobalWebhookUrl] = useState<string>('');
   const { toast } = useToast();
 
   const toggleGroup = (groupId: string) => {
@@ -854,6 +989,35 @@ const Personalization = () => {
                 </p>
               </div>
 
+              {/* Globale Webhook URL */}
+              <Card className="bg-gray-50 border-gray-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+                    <Link className="w-5 h-5" />
+                    Globale Webhook URL (Test)
+                  </CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Diese URL wird für alle Scrape-Jobs als Standard verwendet.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="global-webhook-url">Standard Webhook URL</Label>
+                    <Input
+                      id="global-webhook-url"
+                      type="url"
+                      placeholder="https://your-webhook.com/endpoint"
+                      value={globalWebhookUrl}
+                      onChange={(e) => setGlobalWebhookUrl(e.target.value)}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-500">
+                      Du kannst diese URL für einzelne Scrape-Jobs überschreiben.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Error Message */}
               {errorMessage && (
                 <Card className="border-red-200 bg-red-50">
@@ -970,6 +1134,7 @@ const Personalization = () => {
                       isExpanded={expandedGroups.has(group.scrape_job_id || 'unknown')}
                       onToggle={() => toggleGroup(group.scrape_job_id || 'unknown')}
                       onUpdateGroup={updateGroup}
+                      webhookUrl={globalWebhookUrl}
                     />
                   ))}
                 </div>
