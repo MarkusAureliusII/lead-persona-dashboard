@@ -12,10 +12,25 @@ import {
   User, 
   Mail, 
   Shield,
-  Bell
+  Bell,
+  Webhook
 } from "lucide-react";
+import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
+import { N8nChatWidgetConfig } from "@/components/lead-agent/N8nChatWidgetConfig";
+import { useWebhookConfig } from "@/hooks/useWebhookConfig";
+import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
 
 const Settings = () => {
+  const { webhookUrl, handleWebhookUrlChange } = useWebhookConfig();
+  const {
+    isWidgetEnabled,
+    widgetUrl,
+    customizations,
+    handleWidgetEnabledChange,
+    handleWidgetUrlChange,
+    handleCustomizationsChange
+  } = useN8nWidgetConfig();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
@@ -32,6 +47,35 @@ const Settings = () => {
               </div>
 
               <div className="space-y-8">
+                {/* n8n Integration Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Webhook className="w-5 h-5" />
+                      n8n Integration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Konfigurieren Sie Ihre n8n Webhook-Integration für den AI Lead Agent
+                    </p>
+                    <N8nConfiguration
+                      webhookUrl={webhookUrl}
+                      onWebhookUrlChange={handleWebhookUrlChange}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* n8n Chat Widget Configuration */}
+                <N8nChatWidgetConfig
+                  widgetUrl={widgetUrl}
+                  onWidgetUrlChange={handleWidgetUrlChange}
+                  isEnabled={isWidgetEnabled}
+                  onEnabledChange={handleWidgetEnabledChange}
+                  customizations={customizations}
+                  onCustomizationsChange={handleCustomizationsChange}
+                />
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">

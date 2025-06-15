@@ -7,12 +7,61 @@ import {
   Bot,
   TrendingUp,
   Zap,
-  Target
+  Target,
+  MessageSquare,
+  Settings as SettingsIcon
 } from "lucide-react";
+import { useState } from "react";
+import { LeadAgentChat } from "./lead-agent/LeadAgentChat";
+import { TargetAudience, SearchParameters } from "@/types/leadAgent";
+import { useWebhookConfig } from "@/hooks/useWebhookConfig";
+import { Link } from "react-router-dom";
 
 export function Dashboard() {
+  const { webhookUrl } = useWebhookConfig();
+  const [targetAudience] = useState<TargetAudience>({
+    industry: "Technologie",
+    companySize: "50-200",
+    jobTitle: "CTO",
+    location: "Deutschland"
+  });
+
+  const handleParametersGenerated = (parameters: SearchParameters) => {
+    console.log("Generated parameters:", parameters);
+    // Parameters will be used by the chat component
+  };
+
   return (
     <div className="space-y-6">
+      {/* AI Chat Bot - Most Prominent Feature */}
+      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border-2 border-blue-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-600 rounded-lg">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">🐱 AI Lead Agent</h1>
+              <p className="text-gray-600">Ihr intelligenter Assistent für Lead-Generierung mit Katzen-Power</p>
+            </div>
+          </div>
+          {!webhookUrl && (
+            <Link to="/settings">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <SettingsIcon className="w-4 h-4" />
+                Konfiguration
+              </Button>
+            </Link>
+          )}
+        </div>
+        
+        <LeadAgentChat
+          onParametersGenerated={handleParametersGenerated}
+          targetAudience={targetAudience}
+          webhookUrl={webhookUrl}
+        />
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-white border border-gray-200">
@@ -62,25 +111,27 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Start */}
+        {/* Quick Actions */}
         <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Target className="w-5 h-5 text-blue-600" />
-              Quick Start
+              Quick Actions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button 
-              className="w-full justify-start space-x-3 h-12 bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
-            >
-              <Bot className="w-5 h-5" />
-              <span>Start Lead Scraping</span>
-            </Button>
+            <Link to="/lead-agent">
+              <Button 
+                className="w-full justify-start space-x-3 h-12 bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span>Vollständiger Lead Agent</span>
+              </Button>
+            </Link>
 
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              💡 <strong>Tip:</strong> Describe your ideal customer profile to our AI agent, and it will automatically scrape, personalize, and add qualified leads to your mailing lists.
+              💡 <strong>Tipp:</strong> Verwenden Sie den Chat oben für schnelle Lead-Suchen oder besuchen Sie den vollständigen Lead Agent für erweiterte Funktionen.
             </div>
           </CardContent>
         </Card>
