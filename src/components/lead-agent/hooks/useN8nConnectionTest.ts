@@ -9,6 +9,9 @@ export interface TestResult {
   message: string;
   responseType?: string;
   details?: string;
+  httpStatus?: number;
+  errorCode?: string;
+  timestamp?: string;
 }
 
 export function useN8nConnectionTest() {
@@ -47,32 +50,54 @@ export function useN8nConnectionTest() {
     setConnectionStatus('testing');
     setTestResult(null);
     const testId = `test_${Date.now()}`;
+    const timestamp = new Date().toISOString();
     
     try {
-      console.log("🧪 Testing n8n webhook connection:", webhookUrl);
+      console.log("🧪 Starting enhanced n8n webhook connection test:", webhookUrl);
       
+      // Create test payload with proper structure
+      const testPayload = {
+        test: true,
+        message: "Enhanced n8n Verbindungstest vom Lead Agent",
+        testId: testId,
+        timestamp: timestamp,
+        userAgent: navigator.userAgent,
+        origin: window.location.origin,
+        targetAudience: {
+          industry: "Test-Branche",
+          companySize: "Test-Unternehmensgröße",
+          jobTitle: "Test-Position",
+          location: "Test-Standort"
+        },
+        metadata: {
+          source: "lead-agent-test",
+          version: "2.0.0",
+          capabilities: ["json", "text", "error-handling"]
+        }
+      };
+
+      console.log("🧪 Test payload:", testPayload);
+      
+      // Enhanced fetch with timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch(webhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Test-Request": "true",
+          "X-Test-ID": testId,
+          "User-Agent": "LeadAgent-Test/2.0.0"
         },
-        body: JSON.stringify({
-          test: true,
-          message: "n8n Verbindungstest vom Lead Agent",
-          testId: testId,
-          timestamp: new Date().toISOString(),
-          targetAudience: {
-            industry: "Test",
-            companySize: "Test",
-            jobTitle: "Test",
-            location: "Test"
-          }
-        }),
+        body: JSON.stringify(testPayload),
+        signal: controller.signal
       });
 
-      console.log("🧪 Test response status:", response.status);
-      console.log("🧪 Test response headers:", Object.fromEntries(response.headers.entries()));
+      clearTimeout(timeoutId);
+
+      console.log("🧪 Enhanced test response status:", response.status);
+      console.log("🧪 Enhanced test response headers:", Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const contentType = response.headers.get('content-type') || '';
@@ -90,59 +115,84 @@ export function useN8nConnectionTest() {
             responseType = 'Text';
           }
         } catch (parseError) {
-          console.error("Parse error:", parseError);
+          console.error("🧪 Parse error:", parseError);
           responseData = await response.text();
           responseType = 'Raw';
         }
 
-        console.log("🧪 Test response data:", responseData);
+        console.log("🧪 Enhanced test response data:", responseData);
 
-        // Vereinfachte Logik - jede erfolgreiche Response ist gut
-        if (responseType === 'JSON') {
-          setConnectionStatus('success');
-          setTestResult({
-            status: 'success',
-            message: 'Verbindung erfolgreich - JSON Response',
-            responseType: 'JSON',
-            details: 'Ihr n8n-Workflow gibt strukturierte JSON-Daten zurück. Perfekt für die AI-Integration!'
-          });
-          
-          toast({
-            title: "✅ Verbindung erfolgreich",
-            description: "Die n8n Webhook Verbindung wurde erfolgreich getestet! JSON-Response erhalten.",
-          });
-        } else {
-          // Alle Text-Responses als Erfolg behandeln
-          const text = responseData.toString().trim();
-          setConnectionStatus('success');
-          setTestResult({
-            status: 'success',
-            message: 'Verbindung erfolgreich - Text Response',
-            responseType: 'Text',
-            details: `Text-Response erhalten: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`
-          });
-          
-          toast({
-            title: "✅ Verbindung erfolgreich",
-            description: "Die n8n Webhook Verbindung funktioniert! Response erhalten.",
-          });
-        }
+        // Enhanced success handling
+        const result: TestResult = {
+          status: 'success',
+          message: `Verbindung erfolgreich - ${responseType} Response`,
+          responseType: responseType,
+          httpStatus: response.status,
+          timestamp: timestamp,
+          details: responseType === 'JSON' 
+            ? `JSON-Response erhalten. Workflow ist bereit für AI-Integration!` 
+            : `Text-Response: "${responseData.toString().substring(0, 100)}${responseData.toString().length > 100 ? '...' : ''}"`
+        };
+
+        setConnectionStatus('success');
+        setTestResult(result);
+        
+        toast({
+          title: "✅ Verbindung erfolgreich",
+          description: `N8N Webhook funktioniert! ${responseType}-Response erhalten.`,
+        });
+
       } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // Enhanced error handling for non-200 responses
+        let errorDetails = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            errorDetails += ` - ${errorText.substring(0, 200)}`;
+          }
+        } catch (e) {
+          console.warn("Could not read error response body:", e);
+        }
+
+        throw new Error(errorDetails);
       }
+
     } catch (error) {
-      console.error("🧪 Connection test failed:", error);
+      console.error("🧪 Enhanced connection test failed:", error);
       
-      setConnectionStatus('error');
-      setTestResult({
+      let errorMessage = "Unbekannter Fehler";
+      let errorCode = "UNKNOWN_ERROR";
+
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMessage = "Verbindung timeout (15s überschritten)";
+          errorCode = "TIMEOUT_ERROR";
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = "Netzwerkfehler - Server nicht erreichbar";
+          errorCode = "NETWORK_ERROR";
+        } else if (error.message.includes('CORS')) {
+          errorMessage = "CORS-Fehler - Webhook-Konfiguration prüfen";
+          errorCode = "CORS_ERROR";
+        } else {
+          errorMessage = error.message;
+          errorCode = "HTTP_ERROR";
+        }
+      }
+      
+      const result: TestResult = {
         status: 'error',
         message: 'Verbindung fehlgeschlagen',
-        details: error instanceof Error ? error.message : "Unbekannter Fehler"
-      });
+        details: errorMessage,
+        errorCode: errorCode,
+        timestamp: timestamp
+      };
+
+      setConnectionStatus('error');
+      setTestResult(result);
       
       toast({
         title: "❌ Verbindung fehlgeschlagen",
-        description: "Die n8n Webhook Verbindung konnte nicht hergestellt werden. Überprüfen Sie die URL und Ihren n8n Workflow.",
+        description: `${errorMessage}. Überprüfen Sie die URL und N8N Workflow-Konfiguration.`,
         variant: "destructive",
       });
     }

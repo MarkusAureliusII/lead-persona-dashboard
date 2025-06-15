@@ -3,12 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TestTube } from "lucide-react";
+import { TestTube, Bug } from "lucide-react";
 import { useN8nConnectionTest } from "./hooks/useN8nConnectionTest";
 import { N8nTestResult } from "./components/N8nTestResult";
 import { N8nSetupRecommendations } from "./components/N8nSetupRecommendations";
 import { N8nConfigurationGuide } from "./N8nConfigurationGuide";
+import { N8nWorkflowDebugger } from "./components/N8nWorkflowDebugger";
 import { getStatusIcon, getStatusColor } from "./utils/n8nStatusUtils";
+import { useState } from "react";
 
 interface N8nConfigurationProps {
   webhookUrl: string;
@@ -17,6 +19,7 @@ interface N8nConfigurationProps {
 
 export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigurationProps) {
   const { connectionStatus, testResult, testConnection } = useN8nConnectionTest();
+  const [showDebugger, setShowDebugger] = useState(false);
 
   const handleTestConnection = () => {
     testConnection(webhookUrl);
@@ -58,6 +61,15 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
               <TestTube className="w-4 h-4 mr-2" />
               {connectionStatus === 'testing' ? "Teste..." : "Verbindung testen"}
             </Button>
+            
+            <Button
+              onClick={() => setShowDebugger(!showDebugger)}
+              variant="outline"
+              size="sm"
+            >
+              <Bug className="w-4 h-4 mr-2" />
+              Debug
+            </Button>
           </div>
 
           {testResult && <N8nTestResult testResult={testResult} />}
@@ -65,6 +77,13 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
           <N8nSetupRecommendations />
         </div>
       </Card>
+
+      {/* Enhanced Workflow Debugger */}
+      <N8nWorkflowDebugger
+        webhookUrl={webhookUrl}
+        isVisible={showDebugger}
+        onToggleVisibility={() => setShowDebugger(!showDebugger)}
+      />
 
       <N8nConfigurationGuide />
     </div>
