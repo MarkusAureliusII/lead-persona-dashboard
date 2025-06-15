@@ -11,11 +11,13 @@ import { useN8nConfig } from '@/hooks/useN8nConfig';
 // Daten und Logik basierend auf deinem Prompt
 const jobPackages: Record<string, string[]> = {
   "Entscheidungsträger": ["Owner", "Founder", "CEO", "Co-Founder", "Managing Director", "Geschäftsführer", "General Manager", "President", "Inhaber", "Betriebsleiter", "Executive Director"],
-  "Marketing": ["Marketing Manager", "Online Marketing Manager", "Digital Marketing Manager", "Head of Marketing", "Marketing Director", "Content Manager", "Brand Manager", "Growth Manager", "Performance Marketing Manager", "CMO"],
-  "Recruiting/HR": ["HR Manager", "Recruiter", "Talent Acquisition Manager", "Head of HR", "People Manager", "HR Director"],
-  "Vertrieb": ["Sales Manager", "Head of Sales", "Business Development Manager", "Account Manager", "Sales Director"],
-  "Technik/IT": ["Technical Director", "IT Manager", "CTO", "Head of IT", "Software Development Manager"],
-  // weitere Pakete können hier hinzugefügt werden
+  "Marketing": ["Marketing Manager", "Head of Marketing", "CMO"],
+  "Recruiting/HR": ["HR Manager", "Recruiter", "Head of HR"],
+  "Vertrieb": ["Sales Manager", "Head of Sales", "Business Development Manager"],
+  "Technik/IT": ["CTO", "IT Manager", "Technical Director"],
+  "Operations": ["Operations Manager", "COO"],
+  "Finanzen": ["CFO", "Finance Manager"],
+  "Produkt": ["Product Manager", "Head of Product"],
 };
 
 const companySizes = ["1-10", "11-50", "51-200", "201-500", "501-1000", "1001-5000", "5001-10000", "10001+"];
@@ -59,7 +61,6 @@ export function LeadGenerationForm() {
 
     // Location
     if (formData.location) {
-        // Simples Mapping für DACH
         const locations = formData.location.split(',').map(l => l.trim().toLowerCase());
         if (locations.includes('dach')) {
             params.append('personLocations[]', 'Germany');
@@ -75,8 +76,8 @@ export function LeadGenerationForm() {
         params.append('organizationNumEmployeesRanges[]', formData.companySize.replace('-', '%2C'));
     }
     
-    // Industry
-    if (formData.industry && industryTags[formData.industry]) {
+    // Industry - prüft jetzt, ob ein gültiger Wert (nicht 'all') ausgewählt wurde
+    if (formData.industry && formData.industry !== 'all' && industryTags[formData.industry]) {
         params.append('organizationIndustryTagIds[]', industryTags[formData.industry]);
     }
 
@@ -102,7 +103,7 @@ export function LeadGenerationForm() {
     const generatedUrl = generateSearchUrl();
     
     const payload = {
-        form_submission: true, // Um im Workflow zwischen Chat und Formular zu unterscheiden
+        form_submission: true,
         search_details: {
             url: generatedUrl,
             totalRecords: formData.leadCount,
@@ -152,7 +153,7 @@ export function LeadGenerationForm() {
         <div>
           <Label htmlFor="job-package">1. Zielgruppe (Paket)</Label>
           <Select onValueChange={(value) => handleInputChange('jobPackage', value)}>
-            <SelectTrigger id="job-package"><SelectValue placeholder="Vordefiniertes Paket wählen..." /></SelectTrigger>
+            <SelectTrigger id="job-package"><SelectValue placeholder="Bitte wählen..." /></SelectTrigger>
             <SelectContent>
               {Object.keys(jobPackages).map(pkg => <SelectItem key={pkg} value={pkg}>{pkg}</SelectItem>)}
             </SelectContent>
@@ -180,7 +181,8 @@ export function LeadGenerationForm() {
             <Select onValueChange={(value) => handleInputChange('industry', value)}>
               <SelectTrigger id="industry"><SelectValue placeholder="Branche wählen..." /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Alle Branchen</SelectItem>
+                {/* HIER IST DIE KORREKTUR: value="all" statt value="" */}
+                <SelectItem value="all">Alle Branchen</SelectItem>
                 {Object.keys(industryTags).map(ind => <SelectItem key={ind} value={ind}>{ind}</SelectItem>)}
               </SelectContent>
             </Select>
