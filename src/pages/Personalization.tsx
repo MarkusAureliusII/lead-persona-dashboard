@@ -217,21 +217,6 @@ function LeadCard({
               </a>
             </div>
           )}
-
-          {/* Website Link */}
-          {getWebsite() && (
-            <div className="flex items-center gap-2 text-sm">
-              <Globe size={14} className="text-purple-600" />
-              <a 
-                href={getWebsite()} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-purple-600 hover:underline flex items-center gap-1"
-              >
-                Website besuchen <ExternalLink size={10} />
-              </a>
-            </div>
-          )}
         </div>
 
         {/* Firmendaten - aufklappbar */}
@@ -601,75 +586,87 @@ function LeadGroupCard({
     console.log('Leads to process:', group.filteredLeads.length);
     console.log('Webhook URL:', localWebhookUrl);
     
-    // Webhook payload erstellen
-    const webhookPayload = {
-      scrape_job_id: group.scrape_job_id,
-      scrape_job_name: group.scrape_job_name,
-      personalization_options: {
-        email_validation: group.personalizationOptions.emailValidation,
-        private_linkedin_analysis: group.personalizationOptions.privateLinkedInAnalysis,
-        company_linkedin_analysis: group.personalizationOptions.companyLinkedInAnalysis,
-        website_analysis: group.personalizationOptions.websiteAnalysis
-      },
-      leads: group.filteredLeads.map(lead => ({
-        id: lead.id,
-        first_name: lead.first_name || lead.raw_scraped_data?.firstName || '',
-        last_name: lead.last_name || lead.raw_scraped_data?.lastName || '',
-        email: lead.email || lead.raw_scraped_data?.email || null,
-        phone: lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null,
-        company_name: lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null,
-        title: lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null,
-        website: lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url || null,
-        location: {
-          city: lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location || null,
-          state: lead.state || lead.raw_scraped_data?.state || null,
-          country: lead.country || lead.raw_scraped_data?.country || null
-        },
-        linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin || null,
-        company_linkedin_url: lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl || null,
-        raw_data: lead.raw_scraped_data
-      })),
-      total_leads: group.filteredLeads.length,
-      timestamp: new Date().toISOString()
-    };
+    let successCount = 0;
+    let errorCount = 0;
     
-    try {
-      toast({
-        title: "Sende Daten...",
-        description: "Die Leads werden an den Webhook gesendet.",
-      });
-
-      const response = await fetch(localWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    toast({
+      title: "Sende Leads...",
+      description: `Verarbeite ${group.filteredLeads.length} Leads...`,
+    });
+    
+    // Sende jeden Lead einzeln
+    for (const lead of group.filteredLeads) {
+      const leadPayload = {
+        scrape_job_id: group.scrape_job_id,
+        scrape_job_name: group.scrape_job_name,
+        personalization_options: {
+          email_validation: group.personalizationOptions.emailValidation,
+          private_linkedin_analysis: group.personalizationOptions.privateLinkedInAnalysis,
+          company_linkedin_analysis: group.personalizationOptions.companyLinkedInAnalysis,
+          website_analysis: group.personalizationOptions.websiteAnalysis
         },
-        body: JSON.stringify(webhookPayload)
-      });
+        lead: {
+          id: lead.id,
+          first_name: lead.first_name || lead.raw_scraped_data?.firstName || '',
+          last_name: lead.last_name || lead.raw_scraped_data?.lastName || '',
+          email: lead.email || lead.raw_scraped_data?.email || null,
+          phone: lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null,
+          company_name: lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null,
+          title: lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null,
+          website: lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url || null,
+          location: {
+            city: lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location || null,
+            state: lead.state || lead.raw_scraped_data?.state || null,
+            country: lead.country || lead.raw_scraped_data?.country || null
+          },
+          linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin || null,
+          company_linkedin_url: lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl || null,
+          raw_data: lead.raw_scraped_data
+        },
+        timestamp: new Date().toISOString()
+      };
       
-      if (!response.ok) {
-        throw new Error(`Webhook responded with status: ${response.status}`);
+      try {
+        const response = await fetch(localWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(leadPayload)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Status: ${response.status}`);
+        }
+        
+        successCount++;
+        console.log(`✅ Lead ${lead.id} sent successfully`);
+        
+      } catch (error) {
+        errorCount++;
+        console.error(`❌ Failed to send lead ${lead.id}:`, error);
+        console.log('Failed payload:', JSON.stringify(leadPayload, null, 2));
       }
-      
-      const result = await response.json();
-      console.log('Webhook response:', result);
-      
+    }
+    
+    // Finale Benachrichtigung
+    if (errorCount === 0) {
       toast({
-        title: "Personalisierung gestartet",
-        description: `${group.filteredLeads.length} Leads wurden erfolgreich zur Verarbeitung gesendet.`,
+        title: "Personalisierung erfolgreich gestartet",
+        description: `Alle ${successCount} Leads wurden erfolgreich gesendet.`,
         variant: "default"
       });
-      
-    } catch (error) {
-      console.error('Webhook error:', error);
-      
-      // Log the payload to console for debugging
-      console.log('Failed webhook payload:', JSON.stringify(webhookPayload, null, 2));
-      
+    } else if (successCount === 0) {
       toast({
         title: "Fehler beim Senden",
-        description: `Die Leads konnten nicht gesendet werden: ${error.message}. Payload wurde in die Konsole geloggt.`,
+        description: `Keiner der ${group.filteredLeads.length} Leads konnte gesendet werden.`,
         variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Teilweise erfolgreich",
+        description: `${successCount} von ${group.filteredLeads.length} Leads wurden gesendet. ${errorCount} fehlgeschlagen.`,
+        variant: "default"
       });
     }
   };
