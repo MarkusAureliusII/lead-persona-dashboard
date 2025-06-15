@@ -581,92 +581,97 @@ function LeadGroupCard({
   };
 
   const handleStartPersonalization = async () => {
-    console.log('Starting personalization for group:', group.scrape_job_id);
+    console.log('Starting batch personalization for group:', group.scrape_job_id);
     console.log('Options:', group.personalizationOptions);
     console.log('Leads to process:', group.filteredLeads.length);
     console.log('Webhook URL:', localWebhookUrl);
     
-    let successCount = 0;
-    let errorCount = 0;
-    
     toast({
-      title: "Sende Leads...",
-      description: `Verarbeite ${group.filteredLeads.length} Leads...`,
+      title: "Sende Leads als Batch...",
+      description: `Verarbeite ${group.filteredLeads.length} Leads in einem einzelnen Webhook-Call...`,
     });
     
-    // Sende jeden Lead einzeln
-    for (const lead of group.filteredLeads) {
-      const leadPayload = {
-        scrape_job_id: group.scrape_job_id,
-        scrape_job_name: group.scrape_job_name,
-        personalization_options: {
-          email_validation: group.personalizationOptions.emailValidation,
-          private_linkedin_analysis: group.personalizationOptions.privateLinkedInAnalysis,
-          company_linkedin_analysis: group.personalizationOptions.companyLinkedInAnalysis,
-          website_analysis: group.personalizationOptions.websiteAnalysis
+    // Prepare batch payload for all leads
+    const batchPayload = {
+      scrape_job_id: group.scrape_job_id,
+      scrape_job_name: group.scrape_job_name,
+      personalization_options: {
+        email_validation: group.personalizationOptions.emailValidation,
+        private_linkedin_analysis: group.personalizationOptions.privateLinkedInAnalysis,
+        company_linkedin_analysis: group.personalizationOptions.companyLinkedInAnalysis,
+        website_analysis: group.personalizationOptions.websiteAnalysis
+      },
+      leads: group.filteredLeads.map(lead => ({
+        id: lead.id,
+        first_name: lead.first_name || lead.raw_scraped_data?.firstName || '',
+        last_name: lead.last_name || lead.raw_scraped_data?.lastName || '',
+        email: lead.email || lead.raw_scraped_data?.email || null,
+        phone: lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null,
+        company_name: lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null,
+        title: lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null,
+        website: lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url || null,
+        location: {
+          city: lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location || null,
+          state: lead.state || lead.raw_scraped_data?.state || null,
+          country: lead.country || lead.raw_scraped_data?.country || null
         },
-        lead: {
-          id: lead.id,
-          first_name: lead.first_name || lead.raw_scraped_data?.firstName || '',
-          last_name: lead.last_name || lead.raw_scraped_data?.lastName || '',
-          email: lead.email || lead.raw_scraped_data?.email || null,
-          phone: lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null,
-          company_name: lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null,
-          title: lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null,
-          website: lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url || null,
-          location: {
-            city: lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location || null,
-            state: lead.state || lead.raw_scraped_data?.state || null,
-            country: lead.country || lead.raw_scraped_data?.country || null
-          },
-          linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin || null,
-          company_linkedin_url: lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl || null,
-          raw_data: lead.raw_scraped_data
-        },
-        timestamp: new Date().toISOString()
-      };
-      
-      try {
-        const response = await fetch(localWebhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(leadPayload)
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Status: ${response.status}`);
-        }
-        
-        successCount++;
-        console.log(`✅ Lead ${lead.id} sent successfully`);
-        
-      } catch (error) {
-        errorCount++;
-        console.error(`❌ Failed to send lead ${lead.id}:`, error);
-        console.log('Failed payload:', JSON.stringify(leadPayload, null, 2));
-      }
-    }
+        linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin || null,
+        company_linkedin_url: lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl || null,
+        raw_data: lead.raw_scraped_data
+      })),
+      batchMode: true,
+      batchSize: group.filteredLeads.length,
+      timestamp: new Date().toISOString()
+    };
     
-    // Finale Benachrichtigung
-    if (errorCount === 0) {
+    try {
+      console.log('🚀 Sending batch payload to n8n:', {
+        scrape_job_id: batchPayload.scrape_job_id,
+        scrape_job_name: batchPayload.scrape_job_name,
+        personalization_options: batchPayload.personalization_options,
+        batchMode: batchPayload.batchMode,
+        batchSize: batchPayload.batchSize,
+        leadsCount: batchPayload.leads.length,
+        firstLead: batchPayload.leads[0], // Show first lead as example
+        webhookUrl: localWebhookUrl
+      });
+      
+      const response = await fetch(localWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Batch-Mode': 'true',
+          'X-Batch-Size': batchPayload.batchSize.toString(),
+        },
+        body: JSON.stringify(batchPayload)
+      });
+      
+      console.log('📡 Response status:', response.status, response.statusText);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Webhook error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Batch webhook response:', responseData);
+      
       toast({
-        title: "Personalisierung erfolgreich gestartet",
-        description: `Alle ${successCount} Leads wurden erfolgreich gesendet.`,
+        title: "Batch-Personalisierung erfolgreich gestartet",
+        description: `Alle ${group.filteredLeads.length} Leads wurden in einem einzelnen Webhook-Call gesendet.`,
         variant: "default"
       });
-    } else if (successCount === 0) {
+      
+    } catch (error) {
+      console.error('❌ Failed to send batch webhook:', error);
+      console.log('Failed batch payload:', JSON.stringify(batchPayload, null, 2));
+      
       toast({
-        title: "Fehler beim Senden",
-        description: `Keiner der ${group.filteredLeads.length} Leads konnte gesendet werden.`,
+        title: "Fehler beim Senden der Batch-Anfrage",
+        description: `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
         variant: "destructive"
-      });
-    } else {
-      toast({
-        title: "Teilweise erfolgreich",
-        description: `${successCount} von ${group.filteredLeads.length} Leads wurden gesendet. ${errorCount} fehlgeschlagen.`,
-        variant: "default"
       });
     }
   };
