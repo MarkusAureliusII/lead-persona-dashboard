@@ -8,7 +8,9 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Search,
+  MessageCircle
 } from "lucide-react";
 
 export function WebhookConfigurations() {
@@ -54,6 +56,26 @@ export function WebhookConfigurations() {
         url: webhookSettings.linkedin_analysis_webhook,
         status: isValidUrl(webhookSettings.linkedin_analysis_webhook) ? "configured" : "error",
         description: "LinkedIn-Profil-Analyse"
+      });
+    }
+
+    if (webhookSettings.lead_scraping_webhook) {
+      webhooks.push({
+        id: "scraping",
+        name: "Lead-Scraping",
+        url: webhookSettings.lead_scraping_webhook,
+        status: isValidUrl(webhookSettings.lead_scraping_webhook) ? "configured" : "error",
+        description: "Apollo.io Lead-Scraping-Formulare"
+      });
+    }
+
+    if (webhookSettings.ai_chat_webhook) {
+      webhooks.push({
+        id: "chat",
+        name: "KI-Chat-Widget",
+        url: webhookSettings.ai_chat_webhook,
+        status: isValidUrl(webhookSettings.ai_chat_webhook) ? "configured" : "error",
+        description: "N8N KI-Chat-Widget Integration"
       });
     }
 

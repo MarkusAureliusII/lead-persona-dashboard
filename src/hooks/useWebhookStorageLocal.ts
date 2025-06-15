@@ -8,6 +8,8 @@ interface WebhookSettings {
   email_verification_webhook: string;
   linkedin_analysis_webhook: string;
   website_analysis_webhook: string;
+  lead_scraping_webhook: string;
+  ai_chat_webhook: string;
 }
 
 // Fallback to localStorage if database is not ready
@@ -20,6 +22,8 @@ export function useWebhookStorageLocal() {
     email_verification_webhook: '',
     linkedin_analysis_webhook: '',
     website_analysis_webhook: '',
+    lead_scraping_webhook: '',
+    ai_chat_webhook: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,6 +45,8 @@ export function useWebhookStorageLocal() {
           email_verification_webhook: parsed.email_verification_webhook || '',
           linkedin_analysis_webhook: parsed.linkedin_analysis_webhook || '',
           website_analysis_webhook: parsed.website_analysis_webhook || '',
+          lead_scraping_webhook: parsed.lead_scraping_webhook || '',
+          ai_chat_webhook: parsed.ai_chat_webhook || '',
         });
       }
     } catch (error) {

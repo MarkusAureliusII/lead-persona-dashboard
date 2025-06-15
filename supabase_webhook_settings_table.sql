@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS webhook_settings (
     linkedin_analysis_webhook TEXT,
     website_analysis_webhook TEXT,
     
+    -- Lead Scraping und KI Agent Webhooks
+    lead_scraping_webhook TEXT,
+    ai_chat_webhook TEXT,
+    
     -- Metadaten
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -56,3 +60,5 @@ COMMENT ON COLUMN webhook_settings.lead_processing_webhook IS 'Spezieller Webhoo
 COMMENT ON COLUMN webhook_settings.email_verification_webhook IS 'Webhook für E-Mail-Validierung';
 COMMENT ON COLUMN webhook_settings.linkedin_analysis_webhook IS 'Webhook für LinkedIn-Profil-Analyse';
 COMMENT ON COLUMN webhook_settings.website_analysis_webhook IS 'Webhook für Website-Content-Analyse';
+COMMENT ON COLUMN webhook_settings.lead_scraping_webhook IS 'Webhook für Apollo.io Lead-Scraping-Formulare';
+COMMENT ON COLUMN webhook_settings.ai_chat_webhook IS 'Webhook für N8N KI-Chat-Widget Integration';

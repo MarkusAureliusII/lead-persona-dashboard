@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Check, AlertCircle, Webhook, Link, Mail, Linkedin, Globe, Info } from "lucide-react";
+import { Loader2, Save, Check, AlertCircle, Webhook, Link, Mail, Linkedin, Globe, Info, Search, MessageCircle } from "lucide-react";
 import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { useState } from 'react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -231,6 +231,56 @@ export function WebhookSettingsImproved() {
               />
             </CardContent>
           </Card>
+
+          {/* Lead Scraping */}
+          <Card className="border-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Search className="w-4 h-4 text-orange-600" />
+                Lead-Scraping
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="lead-scraping" className="text-sm">Webhook für Apollo.io Lead-Scraping-Formulare</Label>
+                <StatusBadge url={webhookSettings.lead_scraping_webhook} />
+              </div>
+              <Input
+                id="lead-scraping"
+                type="url"
+                placeholder="https://deine-n8n-instanz.com/webhook/apollo-scraping"
+                value={webhookSettings.lead_scraping_webhook}
+                onChange={(e) => updateWebhookUrl('lead_scraping_webhook', e.target.value)}
+                onBlur={handleSave}
+                className="font-mono text-sm"
+              />
+            </CardContent>
+          </Card>
+
+          {/* AI Chat Webhook */}
+          <Card className="border-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageCircle className="w-4 h-4 text-cyan-600" />
+                KI-Chat-Widget
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="ai-chat" className="text-sm">Webhook für N8N KI-Chat-Widget Integration</Label>
+                <StatusBadge url={webhookSettings.ai_chat_webhook} />
+              </div>
+              <Input
+                id="ai-chat"
+                type="url"
+                placeholder="https://deine-n8n-instanz.com/webhook/chat-widget"
+                value={webhookSettings.ai_chat_webhook}
+                onChange={(e) => updateWebhookUrl('ai_chat_webhook', e.target.value)}
+                onBlur={handleSave}
+                className="font-mono text-sm"
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -243,12 +293,14 @@ export function WebhookSettingsImproved() {
           <div className="bg-white rounded-lg p-4 border">
             <pre className="text-xs text-gray-700 leading-relaxed overflow-x-auto">
 {`N8N Workflow-Struktur:
-┌─ Webhook Trigger (Empfange Leads)
-├─ Switch Node (Entscheide basierend auf Lead-Daten)
+┌─ Webhook Trigger (Empfange Leads/Chat/Scraping)
+├─ Switch Node (Entscheide basierend auf Webhook-Typ)
+│  ├─ Lead-Scraping → Apollo.io API → Scrape & Save
 │  ├─ E-Mail validieren → Setze "email_verification_status"
 │  ├─ LinkedIn analysieren → Setze "analysis_text_personal_linkedin"  
-│  └─ Website analysieren → Setze "analysis_text_website"
-└─ HTTP Request → Update Lead in Supabase mit Ergebnissen`}
+│  ├─ Website analysieren → Setze "analysis_text_website"
+│  └─ KI-Chat → OpenAI/Claude → Antwort generieren
+└─ HTTP Request → Update Supabase / Return Response`}
             </pre>
           </div>
           <p className="text-xs text-gray-600 mt-3">
