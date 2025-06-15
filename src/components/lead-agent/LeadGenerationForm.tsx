@@ -10,6 +10,7 @@ import { SlidersHorizontal, Rocket, X, Copy } from "lucide-react";
 import { useN8nConfig } from '@/hooks/useN8nConfig';
 import { Badge } from '@/components/ui/badge';
 
+// Daten basierend auf deinem Prompt
 const jobPackages: Record<string, string[]> = {
   "Entscheidungsträger": ["Owner", "Founder", "CEO", "Co-Founder", "Managing Director", "Geschäftsführer"],
   "Marketing": ["Marketing Manager", "Head of Marketing", "CMO"],
@@ -35,7 +36,7 @@ export function LeadGenerationForm() {
   
   const [formData, setFormData] = useState({
     companySize: '',
-    industry: '',
+    industry: 'all',
     keywords: '',
     leadCount: 500,
     formWebhookUrl: ''
@@ -55,11 +56,9 @@ export function LeadGenerationForm() {
       const setter = type === 'location' ? setLocations : setCustomTitles;
       const valueSource = type === 'location' ? currentLocation : currentCustomTitle;
       const value = valueSource.trim();
-
       if (value) {
         setter(prev => [...new Set([...prev, value])]);
       }
-
       if (type === 'location') setCurrentLocation('');
       else setCurrentCustomTitle('');
     }
@@ -81,8 +80,18 @@ export function LeadGenerationForm() {
   };
 
   const handleSubmit = async () => {
-    // ... Logik zum Senden des Webhooks ...
-    // Diese Logik bleibt unverändert
+    if (selectedPackages.length === 0 && customTitles.length === 0) {
+        toast({ title: "Fehlende Eingabe", description: "Bitte mindestens eine Zielgruppe oder Berufsbezeichnung angeben.", variant: "destructive"});
+        return;
+    }
+    const finalWebhookUrl = formData.formWebhookUrl || globalWebhookUrl;
+    if (!finalWebhookUrl) {
+        toast({ title: "Konfiguration fehlt", description: "Es ist keine Webhook-URL konfiguriert.", variant: "destructive"});
+        return;
+    }
+
+    setIsLoading(true);
+    // ... restliche Logik ...
   };
 
   return (
@@ -110,7 +119,7 @@ export function LeadGenerationForm() {
               {customTitles.map(title => (
                 <Badge key={title} variant="secondary" className="flex items-center gap-1">
                   {title}
-                  <button onClick={() => removeTag(title, 'title')} className="rounded-full hover:bg-gray-300 p-0.5"><X size={12}/></button>
+                  <button onClick={() => removeTag(title, 'title')} className="ml-2 hover:text-red-500"><X size={14}/></button>
                 </Badge>
               ))}
               <Input id="custom-titles" placeholder="Titel hinzufügen..." value={currentCustomTitle} onChange={e => setCurrentCustomTitle(e.target.value)} onKeyDown={e => handleTagInput(e, 'title')} className="flex-1 border-none outline-none shadow-none p-0 h-auto focus-visible:ring-0" />
@@ -142,8 +151,8 @@ export function LeadGenerationForm() {
             </div>
           </div>
           <div>
-            <Label htmlFor="form-webhook">Eigene Webhook-URL (optional)</Label>
-            <Input id="form-webhook" placeholder="Globale URL aus den Einstellungen wird verwendet..." onChange={e => handleInputChange('formWebhookUrl', e.target.value)} />
+              <Label htmlFor="form-webhook">Eigene Webhook-URL (optional)</Label>
+              <Input id="form-webhook" placeholder="Globale URL aus den Einstellungen wird verwendet..." onChange={e => handleInputChange('formWebhookUrl', e.target.value)} />
           </div>
           <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
             <Rocket className="mr-2 h-4 w-4" />
