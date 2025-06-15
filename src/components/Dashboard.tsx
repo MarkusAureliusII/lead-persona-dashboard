@@ -16,11 +16,11 @@ import {
 import { useState } from "react";
 import { LeadAgentChat } from "./lead-agent/LeadAgentChat";
 import { TargetAudience, SearchParameters } from "@/types/leadAgent";
-import { useWebhookConfig } from "@/hooks/useWebhookConfig";
+import { useEmbedConfig } from "@/hooks/useEmbedConfig";
 import { Link } from "react-router-dom";
 
 export function Dashboard() {
-  const { webhookUrl } = useWebhookConfig();
+  const { embedUrl } = useEmbedConfig();
   const [targetAudience] = useState<TargetAudience>({
     industry: "Technologie",
     companySize: "50-200",
@@ -44,10 +44,10 @@ export function Dashboard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">🐱 AI Lead Agent</h1>
-              <p className="text-gray-600">Ihr intelligenter Assistent für Lead-Generierung mit Katzen-Power</p>
+              <p className="text-gray-600">Ihr intelligenter Assistent für Lead-Generierung mit eingebettetem Chat und Katzen-Power</p>
             </div>
           </div>
-          {!webhookUrl && (
+          {!embedUrl && (
             <Link to="/settings">
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <SettingsIcon className="w-4 h-4" />
@@ -60,7 +60,7 @@ export function Dashboard() {
         <LeadAgentChat
           onParametersGenerated={handleParametersGenerated}
           targetAudience={targetAudience}
-          webhookUrl={webhookUrl}
+          embedUrl={embedUrl}
         />
       </div>
 
@@ -155,7 +155,7 @@ export function Dashboard() {
             </Link>
 
             <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-              💡 <strong>Tipp:</strong> Verwenden Sie den Chat oben für schnelle Lead-Suchen oder besuchen Sie die dedizierten Bereiche für erweiterte Funktionen.
+              💡 <strong>Tipp:</strong> Das System verwendet jetzt eingebettete Chat-Widgets für bessere Performance und direkte Integration.
             </div>
           </CardContent>
         </Card>

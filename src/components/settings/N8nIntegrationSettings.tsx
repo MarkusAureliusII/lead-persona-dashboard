@@ -1,13 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Webhook, MessageSquare } from "lucide-react";
-import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
+import { N8nEmbedConfiguration } from "@/components/lead-agent/N8nEmbedConfiguration";
 import { N8nChatWidgetManager } from "@/components/lead-agent/N8nChatWidgetManager";
 import { N8nChatWidgetConfig } from "@/components/lead-agent/N8nChatWidgetConfig";
 
 interface N8nIntegrationSettingsProps {
-  webhookUrl: string;
-  onWebhookUrlChange: (url: string) => void;
+  embedUrl: string;
+  onEmbedUrlChange: (url: string) => void;
   isWidgetEnabled: boolean;
   widgetUrl: string;
   onWidgetUrlChange: (url: string) => void;
@@ -21,8 +21,8 @@ interface N8nIntegrationSettingsProps {
 }
 
 export function N8nIntegrationSettings({
-  webhookUrl,
-  onWebhookUrlChange,
+  embedUrl,
+  onEmbedUrlChange,
   isWidgetEnabled,
   widgetUrl,
   onWidgetUrlChange,
@@ -32,21 +32,21 @@ export function N8nIntegrationSettings({
 }: N8nIntegrationSettingsProps) {
   return (
     <div className="space-y-8">
-      {/* n8n Integration Section */}
+      {/* n8n Embed Integration Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Webhook className="w-5 h-5" />
-            n8n Integration
+            n8n Embed Chat Integration
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-600 mb-6">
-            Konfigurieren Sie Ihre n8n Webhook-Integration für den AI Lead Agent
+            Konfigurieren Sie Ihre n8n Embed Chat URL für den AI Lead Agent (neues eingebettetes System)
           </p>
-          <N8nConfiguration
-            webhookUrl={webhookUrl}
-            onWebhookUrlChange={onWebhookUrlChange}
+          <N8nEmbedConfiguration
+            embedUrl={embedUrl}
+            onEmbedUrlChange={onEmbedUrlChange}
           />
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
-import { useWebhookConfig } from "@/hooks/useWebhookConfig";
+import { useEmbedConfig } from "@/hooks/useEmbedConfig";
 import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
 import { SettingsHeader } from "@/components/settings/SettingsHeader";
 import { N8nIntegrationSettings } from "@/components/settings/N8nIntegrationSettings";
@@ -12,7 +12,7 @@ import { PersonalizationSettings } from "@/components/settings/PersonalizationSe
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 
 const Settings = () => {
-  const { webhookUrl, handleWebhookUrlChange } = useWebhookConfig();
+  const { embedUrl, handleEmbedUrlChange } = useEmbedConfig();
   const {
     isWidgetEnabled,
     widgetUrl,
@@ -37,8 +37,8 @@ const Settings = () => {
 
               <div className="space-y-8">
                 <N8nIntegrationSettings
-                  webhookUrl={webhookUrl}
-                  onWebhookUrlChange={handleWebhookUrlChange}
+                  embedUrl={embedUrl}
+                  onEmbedUrlChange={handleEmbedUrlChange}
                   isWidgetEnabled={isWidgetEnabled}
                   widgetUrl={widgetUrl}
                   onWidgetUrlChange={handleWidgetUrlChange}
