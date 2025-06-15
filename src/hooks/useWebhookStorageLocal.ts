@@ -137,8 +137,9 @@ export function useWebhookStorageLocal() {
         setWebhookSettings(updatedSettings);
         
         toast({
-          title: "Webhook-Einstellungen gespeichert",
-          description: "Deine N8N-Webhook-Konfiguration wurde persistent gespeichert.",
+          title: "✅ Erfolgreich gespeichert",
+          description: "Deine Webhook-Einstellungen sind jetzt persistent und überleben Logout/Browser-Wechsel.",
+          duration: 3000
         });
         return true;
       }
@@ -150,9 +151,10 @@ export function useWebhookStorageLocal() {
       setWebhookSettings(updatedSettings);
 
       toast({
-        title: "Webhook-Einstellungen gespeichert (lokal)",
-        description: "Einstellungen wurden lokal gespeichert. Führe die SQL-Migration aus für persistente Speicherung.",
-        variant: "default"
+        title: "⚠️ Nur lokal gespeichert",
+        description: "Deine Webhook-Einstellungen gehen beim Logout verloren. Führe die SQL-Migration aus: ALTER TABLE webhook_settings ADD COLUMN IF NOT EXISTS lead_scraping_webhook TEXT, ADD COLUMN IF NOT EXISTS ai_chat_webhook TEXT;",
+        variant: "destructive",
+        duration: 10000 // Längere Anzeige
       });
 
       return true;
@@ -167,8 +169,10 @@ export function useWebhookStorageLocal() {
         setWebhookSettings(updatedSettings);
 
         toast({
-          title: "Lokal gespeichert",
-          description: "Webhook-Einstellungen wurden nur lokal gespeichert.",
+          title: "⚠️ Nur im Browser gespeichert",
+          description: "Beim nächsten Logout sind deine Einstellungen weg. Führe die SQL-Migration aus!",
+          variant: "destructive",
+          duration: 8000
         });
         return true;
       } catch (localError) {
