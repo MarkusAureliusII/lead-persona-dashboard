@@ -14,6 +14,7 @@ interface ChatWindowProps {
   onToggleFullscreen: () => void;
   onClose: () => void;
   chatContainerRef: React.RefObject<HTMLDivElement>;
+  embeddedChatUrl?: string;
 }
 
 export function ChatWindow({
@@ -24,7 +25,8 @@ export function ChatWindow({
   isLoading,
   onToggleFullscreen,
   onClose,
-  chatContainerRef
+  chatContainerRef,
+  embeddedChatUrl
 }: ChatWindowProps) {
   return (
     <div className={`
@@ -77,7 +79,17 @@ export function ChatWindow({
                 </Button>
               </div>
             </div>
+          ) : embeddedChatUrl ? (
+            // Embedded chat via iframe when URL is provided
+            <iframe
+              src={embeddedChatUrl}
+              className="w-full h-full border-0 rounded-b-lg"
+              title="🐱 N8N Embedded Chat"
+              allow="microphone; camera"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+            />
           ) : (
+            // Fallback to @n8n/chat integration
             <div 
               ref={chatContainerRef} 
               className="h-full"

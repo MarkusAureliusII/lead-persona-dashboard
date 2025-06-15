@@ -60,6 +60,13 @@ export function N8nEnhancedChatWidget({
     }
   };
 
+  // Check if the URL is an embedded chat URL (contains /webhook/ or similar n8n patterns)
+  const isEmbeddedChatUrl = webhookUrl && (
+    webhookUrl.includes('/webhook/') || 
+    webhookUrl.includes('elestio.app') ||
+    webhookUrl.includes('n8n')
+  );
+
   if (!isEnabled || !webhookUrl) {
     return (
       <div className={`fixed ${getPositionClasses()} z-50`}>
@@ -96,6 +103,7 @@ export function N8nEnhancedChatWidget({
           onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           onClose={() => setIsOpen(false)}
           chatContainerRef={chatContainerRef}
+          embeddedChatUrl={isEmbeddedChatUrl ? webhookUrl : undefined}
         />
       )}
     </>
