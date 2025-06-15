@@ -11,7 +11,6 @@ import {
   X,
   Bot
 } from 'lucide-react';
-import '@n8n/chat/style.css';
 
 interface N8nEnhancedChatWidgetProps {
   webhookUrl: string;
@@ -46,35 +45,6 @@ export function N8nEnhancedChatWidget({
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
   const [chatInstance, setChatInstance] = useState<any>(null);
 
-  // Chat-Konfiguration mit deutschen Texten
-  const chatConfig = {
-    webhookUrl: webhookUrl,
-    mode: isFullscreen ? 'fullscreen' : 'window',
-    target: chatContainerRef.current,
-    showWelcomeScreen: true,
-    defaultLanguage: 'de',
-    initialMessages: [
-      customizations.welcomeMessage,
-      'Ich bin Ihr KI-gestützter Lead-Assistent. Stellen Sie mir Fragen zur Lead-Generierung!'
-    ],
-    i18n: {
-      de: {
-        title: '🐱 KI Lead Agent',
-        subtitle: 'Ihr intelligenter Assistent für Lead-Generierung',
-        inputPlaceholder: 'Beschreiben Sie Ihre Lead-Anforderungen...',
-        getStarted: 'Neue Lead-Suche starten',
-        sendButtonText: 'Senden',
-        loadingText: 'Verarbeite Anfrage...',
-        errorText: 'Verbindungsfehler - bitte versuchen Sie es erneut'
-      }
-    },
-    metadata: {
-      source: 'lead-agent-widget',
-      version: '1.0.0',
-      sessionId: `session_${Date.now()}`
-    }
-  };
-
   // Chat Widget initialisieren
   useEffect(() => {
     if (!webhookUrl || !isEnabled || !chatContainerRef.current) return;
@@ -87,19 +57,34 @@ export function N8nEnhancedChatWidget({
         // Dynamischer Import des @n8n/chat Moduls
         const { createChat } = await import('@n8n/chat');
         
+        // Chat-Konfiguration mit korrekten Typen
+        const chatConfig = {
+          webhookUrl: webhookUrl,
+          mode: isFullscreen ? ('fullscreen' as const) : ('window' as const),
+          target: chatContainerRef.current,
+          showWelcomeScreen: true,
+          initialMessages: [customizations.welcomeMessage]
+        };
+        
         const chat = createChat(chatConfig);
         setChatInstance(chat);
         setConnectionStatus('connected');
 
-        // Event Listener für neue Nachrichten
-        if (onNewMessage) {
-          chat.on('message', (message: any) => {
-            onNewMessage(message);
+        // Message handling über postMessage API
+        const handleMessage = (event: MessageEvent) => {
+          if (onNewMessage && event.data && event.data.type === 'chat-message') {
+            onNewMessage(event.data);
             if (!isOpen) {
               setUnreadCount(prev => prev + 1);
             }
-          });
-        }
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+        
+        return () => {
+          window.removeEventListener('message', handleMessage);
+        };
 
       } catch (error) {
         console.error('Fehler beim Initialisieren des Chat-Widgets:', error);
@@ -112,11 +97,11 @@ export function N8nEnhancedChatWidget({
     initializeChat();
 
     return () => {
-      if (chatInstance) {
-        chatInstance.destroy?.();
+      if (chatInstance && typeof chatInstance.destroy === 'function') {
+        chatInstance.destroy();
       }
     };
-  }, [webhookUrl, isEnabled]);
+  }, [webhookUrl, isEnabled, isFullscreen, customizations.welcomeMessage, onNewMessage, isOpen]);
 
   // Unread Count zurücksetzen wenn Chat geöffnet wird
   useEffect(() => {
