@@ -1,119 +1,134 @@
 
 import { N8nService } from '@/services/n8n';
 import { PersonalizationConfig } from '@/types/leadAgent';
-import { ProcessingResult } from '@/types/processing';
+
+export interface ProcessingResult {
+  index: number;
+  leadData: any;
+  status: 'success' | 'error';
+  result?: any;
+  personalizedMessage?: string;
+  error?: string;
+}
 
 export class LeadProcessingService {
-  static async processLead(
-    leadData: any, 
-    index: number, 
+  static async processLeadsBatch(
+    leads: Array<{ data: any; index: number }>,
     personalizationConfig: PersonalizationConfig,
     webhookUrl: string,
-    csvUploadId: string | null,
-    updateLeadProcessingResult: (
-      csvUploadId: string, 
-      rowIndex: number, 
-      status: 'pending' | 'processing' | 'success' | 'error',
-      personalizedMessage?: string,
-      errorMessage?: string
-    ) => Promise<boolean>
-  ): Promise<ProcessingResult> {
-    console.log(`🔄 Processing lead ${index + 1}:`, leadData);
+    onProgress?: (results: ProcessingResult[]) => void
+  ): Promise<ProcessingResult[]> {
+    console.log(`🔄 Processing all ${leads.length} leads in a single batch`);
     
-    // Update status to processing in database
-    if (csvUploadId) {
-      await updateLeadProcessingResult(csvUploadId, index, 'processing');
-    }
+    const results = await this.processBatch(
+      leads,
+      personalizationConfig,
+      webhookUrl,
+      onProgress
+    );
     
+    return results;
+  }
+
+  private static async processBatch(
+    leads: Array<{ data: any; index: number }>,
+    personalizationConfig: PersonalizationConfig,
+    webhookUrl: string,
+    onProgress?: (results: ProcessingResult[]) => void
+  ): Promise<ProcessingResult[]> {
     const n8nService = new N8nService(webhookUrl);
-    const requestPayload = {
-      chatInput: `Please create a personalized outreach message for this lead using the following context:
+    
+    const batchPayload = {
+      chatInput: `Please create personalized outreach messages for the following ${leads.length} leads using the specified context:
 
 Product/Service: ${personalizationConfig.productService}
 Desired Tone: ${personalizationConfig.tonality}
 
-Lead Information:
-${Object.entries(leadData).map(([key, value]) => `${key}: ${value}`).join('\n')}
-
-Please generate a personalized message that addresses this specific lead's context and follows the specified tone.`,
-      targetAudience: {
-        industry: leadData.industry || leadData.companyName || "Unknown",
-        companySize: leadData.companySize || "Unknown", 
-        jobTitle: leadData.jobTitle || leadData.title || "Unknown",
-        location: leadData.location || leadData.city || "Unknown",
-        techStack: leadData.techStack || leadData.technology
-      },
+Please process each lead and return an array of personalized messages in the same order as the leads provided.`,
+      leads: leads.map(({ data, index }) => ({
+        index,
+        leadData: data,
+        targetAudience: {
+          industry: data.industry || data.companyName || "Unknown",
+          companySize: data.companySize || "Unknown", 
+          jobTitle: data.jobTitle || data.title || "Unknown",
+          location: data.location || data.city || "Unknown",
+          techStack: data.techStack || data.technology
+        }
+      })),
       timestamp: new Date().toISOString(),
-      leadData: leadData,
       upsellOptions: personalizationConfig.upsellOptions,
-      dataStreamingRestrictions: personalizationConfig.dataStreamingRestrictions
+      dataStreamingRestrictions: personalizationConfig.dataStreamingRestrictions,
+      batchMode: true,
+      batchSize: leads.length
     };
 
     try {
-      const response = await n8nService.sendMessage(requestPayload);
+      const response = await n8nService.sendMessage(batchPayload);
       
-      if (response.success) {
-        const result = {
-          index,
-          leadData,
-          status: 'success' as const,
-          result: response,
-          personalizedMessage: response.aiResponse || response.message
-        };
+      if (response.success && response.batchResults) {
+        const results: ProcessingResult[] = [];
+        
+        for (let i = 0; i < leads.length; i++) {
+          const { data: leadData, index } = leads[i];
+          const batchResult = response.batchResults[i];
+          
+          if (batchResult?.success) {
+            const result = {
+              index,
+              leadData,
+              status: 'success' as const,
+              result: batchResult,
+              personalizedMessage: batchResult.aiResponse || batchResult.message
+            };
 
-        // Update success status in database
-        if (csvUploadId) {
-          await updateLeadProcessingResult(
-            csvUploadId, 
-            index, 
-            'success', 
-            result.personalizedMessage
-          );
+            results.push(result);
+          } else {
+            const result = {
+              index,
+              leadData,
+              status: 'error' as const,
+              error: batchResult?.error || 'Batch processing failed for this lead'
+            };
+
+            results.push(result);
+          }
         }
-
-        return result;
+        
+        if (onProgress) {
+          onProgress(results);
+        }
+        
+        return results;
       } else {
-        const result = {
+        const errorResults = leads.map(({ data: leadData, index }) => ({
           index,
           leadData,
           status: 'error' as const,
-          error: response.error || 'Processing failed'
-        };
-
-        // Update error status in database
-        if (csvUploadId) {
-          await updateLeadProcessingResult(
-            csvUploadId, 
-            index, 
-            'error', 
-            undefined, 
-            result.error
-          );
+          error: response.error || 'Batch processing failed'
+        }));
+        
+        if (onProgress) {
+          onProgress(errorResults);
         }
-
-        return result;
+        
+        return errorResults;
       }
     } catch (error) {
-      console.error(`❌ Error processing lead ${index + 1}:`, error);
-      const result = {
+      console.error(`❌ Error processing batch:`, error);
+      const errorResults = leads.map(({ data: leadData, index }) => ({
         index,
         leadData,
         status: 'error' as const,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-
-      // Update error status in database
-      if (csvUploadId) {
-        await updateLeadProcessingResult(
-          csvUploadId, 
-          index, 
-          'error', 
-          undefined, 
-          result.error
-        );
+        error: error instanceof Error ? error.message : 'Unknown batch error'
+      }));
+      
+      if (onProgress) {
+        onProgress(errorResults);
       }
-
-      return result;
+      
+      return errorResults;
     }
   }
+
 }
