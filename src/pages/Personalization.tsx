@@ -850,7 +850,7 @@ const Personalization = () => {
             started_at
           )
         `)
-        .in('status', ['new', 'email_verified', 'enriched', 'personalized'])  // Alle Leads im Personalisierungsprozess
+        // Alle Leads ohne Status-Filter (da Status-Spalte entfernt wurde)
         .order('created_at', { ascending: false })
         .limit(200);
 

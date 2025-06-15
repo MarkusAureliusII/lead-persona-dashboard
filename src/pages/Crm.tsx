@@ -38,7 +38,6 @@ type Lead = {
   city: string | null;
   state: string | null;
   country: string | null;
-  status: string;
   is_email_valid: boolean | null;
   enriched_data: any;
   notes: string | null;
@@ -68,8 +67,8 @@ function LeadCard({ lead }: { lead: Lead }) {
               <p className="text-sm text-gray-600">{lead.company_name}</p>
             )}
           </div>
-          <Badge variant={lead.status === 'ready_for_outreach' ? 'default' : 'secondary'}>
-            {lead.status}
+          <Badge variant={lead.is_email_valid ? 'default' : 'secondary'}>
+            {lead.is_email_valid ? 'E-Mail verifiziert' : 'Nicht verifiziert'}
           </Badge>
         </div>
       </CardHeader>
@@ -156,7 +155,6 @@ const Crm = () => {
       const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .in('status', ['ready_for_outreach', 'contacted'])  // Nur verarbeitete Leads für CRM
         .order('updated_at', { ascending: false });
 
       if (error) {
@@ -281,10 +279,9 @@ const Crm = () => {
   // Statistiken berechnen
   const stats = {
     total: leads.length,
-    ready_for_outreach: leads.filter(lead => lead.status === 'ready_for_outreach').length,
-    contacted: leads.filter(lead => lead.status === 'contacted').length,
     validEmails: leads.filter(lead => lead.is_email_valid === true).length,
-    enriched: leads.filter(lead => lead.enriched_data && Object.keys(lead.enriched_data).length > 0).length
+    enriched: leads.filter(lead => lead.enriched_data && Object.keys(lead.enriched_data).length > 0).length,
+    withPhone: leads.filter(lead => lead.phone).length
   };
 
   return (
@@ -336,19 +333,10 @@ const Crm = () => {
                 
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Outreach-Ready</CardTitle>
+                    <CardTitle className="text-sm font-medium">Mit Telefon</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">{stats.ready_for_outreach}</div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Kontaktiert</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-purple-600">{stats.contacted}</div>
+                    <div className="text-2xl font-bold text-purple-600">{stats.withPhone}</div>
                   </CardContent>
                 </Card>
 
