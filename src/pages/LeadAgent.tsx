@@ -12,25 +12,29 @@ const LeadAgent = () => {
         <div className="flex-1 flex flex-col">
           <Header />
           <main className="flex-1 p-6">
-            <div className="space-y-8">
+            <div className="max-w-4xl mx-auto space-y-12">
               
               {/* Sektion 1: AI Chat Agent via iFrame */}
-              <div className="flex flex-col h-[600px]">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                  <Bot className="w-6 h-6 text-blue-600" />
-                  Option 1: AI Lead Agent (via Chat)
-                </h2>
-                <div className="flex-1 border rounded-lg overflow-hidden shadow-sm bg-white">
-                  <iframe
-                    src="/n8n-chat.html"
-                    className="w-full h-full border-0"
-                    title="n8n Chat Agent"
-                  />
+              <section>
+                <div className="flex flex-col h-[600px]">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-3 flex items-center gap-3">
+                    <Bot className="w-7 h-7 text-blue-600" />
+                    Option 1: AI Lead Agent (via Chat)
+                  </h2>
+                  <div className="flex-1 border rounded-xl overflow-hidden shadow-lg bg-white">
+                    <iframe
+                      src="/n8n-chat.html"
+                      className="w-full h-full border-0"
+                      title="n8n Chat Agent"
+                    />
+                  </div>
                 </div>
-              </div>
+              </section>
 
-              {/* Sektion 2: Manuelles Formular */}
-              <LeadGenerationForm />
+              {/* Sektion 2: Manuelles Formular als Alternative */}
+              <section>
+                <LeadGenerationForm />
+              </section>
 
             </div>
           </main>

@@ -6,19 +6,47 @@
   <title>n8n Chat</title>
   <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
   <style>
+    /* Grundlegende Stile für den Container */
     html, body, #n8n-chat-container {
       width: 100%;
       height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #ffffff;
     }
-    /* Überschreibt die Standard-Header-Farbe des Widgets */
+
+    /* CSS-Variablen zur Anpassung des n8n-Chat-Designs */
     :root {
+      /* Farben - angepasst an dein App-Design */
+      --chat--color-primary: #2563eb; /* Blauton für User-Nachrichten */
+      --chat--color-secondary: #f3f4f6; /* Heller Hintergrund für Bot-Nachrichten */
+      --chat--color-dark: #1f2937; /* Dunkler Text */
+      --chat--color-light: #ffffff;
       --chat--header--background: #ffffff;
-      --chat--header--color: #111827;
-      --chat--message--bot--background: #f3f4f6;
+      --chat--header--color: var(--chat--color-dark);
+      --chat--header--border-bottom: 1px solid #e5e7eb;
+      
+      /* Schriften - kleiner und moderner */
+      --chat--heading--font-size: 1.125rem; /* 18px */
+      --chat--subtitle--font-size: 0.875rem; /* 14px */
+      --chat--message--font-size: 0.875rem; /* 14px */
+      --chat--message-line-height: 1.5;
+
+      /* Abstände und Radien */
+      --chat--spacing: 1rem;
+      --chat--border-radius: 0.5rem; /* Passt zum Rest deiner UI */
+      --chat--message--border-radius: 0.75rem;
+      
+      /* Nachrichten-Styling für bessere Lesbarkeit */
+      --chat--message--bot--background: var(--chat--color-secondary);
+      --chat--message--bot--color: var(--chat--color-dark);
+      --chat--message--user--background: var(--chat--color-primary);
+      --chat--message--user--color: var(--chat--color-light);
+
+      /* Eingabefeld */
+      --chat--textarea--height: 44px;
     }
   </style>
 </head>
@@ -34,12 +62,12 @@
       mode: 'fullscreen',
       target: '#n8n-chat-container',
       
-      // Angepasste deutsche Willkommensnachricht
+      // Angepasste deutsche Willkommensnachricht aus deinem Prompt
       initialMessages: [
         "Hallo! Ich helfe dir dabei, passende Leads zu finden. Lass uns die wichtigsten Kriterien durchgehen."
       ],
       
-      // Anpassung der Texte im Header
+      // Anpassung der Texte im Header für ein sauberes UI
       i18n: {
         en: { // Muss 'en' sein, auch wenn der Text deutsch ist
           title: 'AI Lead Agent',
