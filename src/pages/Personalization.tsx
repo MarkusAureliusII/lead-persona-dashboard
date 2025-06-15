@@ -12,7 +12,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from '@/lib/supabase';
 import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { usePersistedForm } from '@/hooks/usePersistedState';
-import { Loader2, Users, MailCheck, Globe, Building, Wand2, RefreshCw, ChevronDown, ChevronRight, Calendar, FolderOpen, FolderClosed, Phone, MapPin, ExternalLink, Linkedin, Play, Trash2, Filter, X, Link } from "lucide-react";
+
+
+import { Loader2, Users, MailCheck, Globe, Building, Wand2, RefreshCw, ChevronDown, ChevronRight, Calendar, FolderOpen, FolderClosed, Phone, MapPin, ExternalLink, Linkedin, Play, Trash2, Filter, X, Link, Clock, Hourglass, Zap, CheckCircle2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
 // Lead-Typ
@@ -55,66 +57,82 @@ type LeadGroup = {
   deletedLeadIds: Set<string>;
 };
 
-// UI-Komponente für einen einzelnen Lead
+// Moderne Lead-Card mit Anreicherungs-Services
 function LeadCard({
   lead,
-  onDelete
+  onDelete,
+  onEnrichmentAction
 }: {
   lead: SimpleLead;
   onDelete: (leadId: string) => void;
+  onEnrichmentAction: (leadId: string, service: string) => void;
 }) {
-  const [showCompanyDetails, setShowCompanyDetails] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const [processingServices, setProcessingServices] = useState<Set<string>>(new Set());
 
-  // Vollständigen Namen zusammenstellen
+  // Kerninformationen extrahieren
   const getFullName = () => {
     const firstName = lead.first_name || lead.raw_scraped_data?.firstName || '';
     const lastName = lead.last_name || lead.raw_scraped_data?.lastName || '';
-    if (firstName && lastName) {
-      return `${firstName} ${lastName}`;
-    } else if (firstName) {
-      return firstName;
-    } else if (lastName) {
-      return lastName;
-    } else if (lead.raw_scraped_data?.name) {
-      return lead.raw_scraped_data.name;
-    }
+    
+    if (firstName && lastName) return `${firstName} ${lastName}`;
+    if (firstName) return firstName;
+    if (lastName) return lastName;
+    if (lead.raw_scraped_data?.name) return lead.raw_scraped_data.name;
     return 'Unbekannter Name';
   };
+
+  const getTitle = () => {
+    return lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || 'Position unbekannt';
+  };
+
+  const getCompany = () => {
+    return lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || 'Firma unbekannt';
+  };
+
   const getEmail = () => {
     return lead.email || lead.raw_scraped_data?.email || null;
   };
-  const getPhone = () => {
-    return lead.phone || lead.raw_scraped_data?.phone || lead.raw_scraped_data?.phoneNumber || null;
+
+  const getLinkedInUrl = () => {
+    return lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin;
   };
-  const getCompany = () => {
-    return lead.company_name || lead.raw_scraped_data?.company || lead.raw_scraped_data?.companyName || null;
-  };
-  const getTitle = () => {
-    return lead.title || lead.raw_scraped_data?.title || lead.raw_scraped_data?.jobTitle || null;
-  };
+
   const getWebsite = () => {
-    // Zuerst aus der Haupttabelle, dann aus raw_scraped_data
-    const website = lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url;
+    const website = lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite;
     if (website && !website.startsWith('http')) {
       return `https://${website}`;
     }
     return website;
   };
-  const getLocation = () => {
-    const city = lead.city || lead.raw_scraped_data?.city || lead.raw_scraped_data?.location;
-    const country = lead.country || lead.raw_scraped_data?.country;
-    const state = lead.state || lead.raw_scraped_data?.state;
-    return [city, state, country].filter(Boolean).join(', ') || null;
+
+  // Anreicherungs-Service ausführen
+  const handleEnrichment = async (service: string) => {
+    setProcessingServices(prev => new Set([...prev, service]));
+    
+    try {
+      await onEnrichmentAction(lead.id, service);
+      toast({
+        title: `${service} gestartet`,
+        description: `Anreicherung für ${getFullName()} wurde gestartet.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler bei Anreicherung",
+        description: `${service} konnte nicht gestartet werden.`,
+        variant: "destructive"
+      });
+    } finally {
+      setTimeout(() => {
+        setProcessingServices(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(service);
+          return newSet;
+        });
+      }, 2000);
+    }
   };
-  const getLinkedInUrl = () => {
-    return lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl || lead.raw_scraped_data?.linkedin;
-  };
-  const getCompanyLinkedInUrl = () => {
-    return lead.company_linkedin_url || lead.raw_scraped_data?.companyLinkedinUrl;
-  };
+
   const handleDelete = () => {
     if (window.confirm(`Möchtest du ${getFullName()} wirklich löschen?`)) {
       onDelete(lead.id);
@@ -124,92 +142,180 @@ function LeadCard({
       });
     }
   };
-  return <Card className="hover:shadow-md transition-shadow mb-3 relative">
-      <Button variant="ghost" size="sm" onClick={handleDelete} className="absolute top-2 right-2 h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50">
+
+  // Service-Status prüfen
+  const isEmailVerified = lead.is_email_verified || lead.email_verification_status === 'valid';
+  const hasLinkedInAnalysis = lead.is_personal_linkedin_analyzed;
+  const hasWebsiteAnalysis = lead.is_website_analyzed;
+
+  return (
+    <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 relative group">
+      {/* Delete Button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleDelete} 
+        className="absolute top-3 right-3 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 hover:bg-red-50 transition-opacity"
+      >
         <Trash2 size={14} />
       </Button>
       
-      <CardContent className="p-4 pr-12">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h4 className="font-bold text-base text-gray-900">{getFullName()}</h4>
-            {getTitle() && <p className="text-sm text-muted-foreground font-medium">{getTitle()}</p>}
+      <CardContent className="p-6">
+        {/* Hauptinformationen */}
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{getFullName()}</h3>
+          <p className="text-blue-600 font-medium text-sm mb-1">{getTitle()}</p>
+          <p className="text-gray-600 text-sm flex items-center gap-1">
+            <Building size={14} />
+            {getCompany()}
+          </p>
+        </div>
+
+        {/* Kontakt-Status */}
+        <div className="flex items-center gap-4 mb-4 text-sm">
+          <div className="flex items-center gap-1">
+            <MailCheck size={14} className={getEmail() ? 'text-green-600' : 'text-gray-400'} />
+            <span className={getEmail() ? 'text-green-700' : 'text-gray-500'}>
+              {getEmail() ? 'E-Mail verfügbar' : 'Keine E-Mail'}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-1">
+            <Linkedin size={14} className={getLinkedInUrl() ? 'text-blue-600' : 'text-gray-400'} />
+            <span className={getLinkedInUrl() ? 'text-blue-700' : 'text-gray-500'}>
+              {getLinkedInUrl() ? 'LinkedIn verfügbar' : 'Kein LinkedIn'}
+            </span>
           </div>
         </div>
 
-        {/* Kontaktinformationen */}
-        <div className="space-y-2 mb-3">
-          {/* E-Mail */}
-          {getEmail() ? <div className="flex items-center gap-2 text-sm">
-              <MailCheck size={14} className="text-blue-600" />
-              <span className="text-blue-700 font-medium">{getEmail()}</span>
-            </div> : <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MailCheck size={14} />
-              <span>Keine E-Mail verfügbar</span>
-            </div>}
+        {/* Anreicherungs-Services */}
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Anreicherungs-Services:</h4>
           
-          {/* Telefon */}
-          {getPhone() ? <div className="flex items-center gap-2 text-sm">
-              <Phone size={14} className="text-blue-600" />
-              <span className="text-blue-700">{getPhone()}</span>
-            </div> : <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Phone size={14} />
-              <span>Keine Telefonnummer verfügbar</span>
-            </div>}
+          <div className="grid grid-cols-2 gap-2">
+            {/* E-Mail Validierung */}
+            <Button
+              variant={isEmailVerified ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleEnrichment('E-Mail Validierung')}
+              disabled={processingServices.has('E-Mail Validierung') || !getEmail()}
+              className="h-8 text-xs"
+            >
+              {processingServices.has('E-Mail Validierung') ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : isEmailVerified ? (
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+              ) : (
+                <MailCheck className="w-3 h-3 mr-1" />
+              )}
+              E-Mail Validierung
+            </Button>
 
-          {/* LinkedIn Profil */}
-          {getLinkedInUrl() && <div className="flex items-center gap-2 text-sm">
-              <Linkedin size={14} className="text-blue-600" />
-              <a href={getLinkedInUrl()} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                LinkedIn Profil <ExternalLink size={10} />
-              </a>
-            </div>}
+            {/* LinkedIn Analyse */}
+            <Button
+              variant={hasLinkedInAnalysis ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleEnrichment('LinkedIn Analyse')}
+              disabled={processingServices.has('LinkedIn Analyse') || !getLinkedInUrl()}
+              className="h-8 text-xs"
+            >
+              {processingServices.has('LinkedIn Analyse') ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : hasLinkedInAnalysis ? (
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+              ) : (
+                <Linkedin className="w-3 h-3 mr-1" />
+              )}
+              LinkedIn Analyse
+            </Button>
+
+            {/* Website Analyse */}
+            <Button
+              variant={hasWebsiteAnalysis ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleEnrichment('Website Analyse')}
+              disabled={processingServices.has('Website Analyse') || !getWebsite()}
+              className="h-8 text-xs"
+            >
+              {processingServices.has('Website Analyse') ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : hasWebsiteAnalysis ? (
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+              ) : (
+                <Globe className="w-3 h-3 mr-1" />
+              )}
+              Website Analyse
+            </Button>
+
+            {/* Alle Services */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEnrichment('Alle Services')}
+              disabled={processingServices.size > 0}
+              className="h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              {processingServices.size > 0 ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <Zap className="w-3 h-3 mr-1" />
+              )}
+              Alle Services
+            </Button>
+          </div>
         </div>
-
-        {/* Firmendaten - aufklappbar */}
-        {(getCompany() || getLocation() || getCompanyLinkedInUrl() || getWebsite()) && <div className="border-t pt-3">
-            <Collapsible open={showCompanyDetails} onOpenChange={setShowCompanyDetails}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto">
-                  <div className="flex items-center gap-2">
-                    <Building size={14} className="text-gray-600" />
-                    <span className="text-sm font-medium">Firmendaten</span>
-                  </div>
-                  {showCompanyDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent>
-                <div className="space-y-2 mt-2 pl-2">
-                  {getCompany() && <div className="flex items-center gap-2 text-sm">
-                      <Building size={12} className="text-gray-500" />
-                      <span><strong>Firma:</strong> {getCompany()}</span>
-                    </div>}
-                  
-                  {getLocation() && <div className="flex items-center gap-2 text-sm">
-                      <MapPin size={12} className="text-gray-500" />
-                      <span><strong>Standort:</strong> {getLocation()}</span>
-                    </div>}
-                  
-                  {getWebsite() && <div className="flex items-center gap-2 text-sm">
-                      <Globe size={12} className="text-purple-600" />
-                      <a href={getWebsite()} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline flex items-center gap-1">
-                        Website besuchen <ExternalLink size={10} />
-                      </a>
-                    </div>}
-                  
-                  {getCompanyLinkedInUrl() && <div className="flex items-center gap-2 text-sm">
-                      <Linkedin size={12} className="text-blue-600" />
-                      <a href={getCompanyLinkedInUrl()} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">
-                        Unternehmens-LinkedIn <ExternalLink size={10} />
-                      </a>
-                    </div>}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>}
       </CardContent>
-    </Card>;
+    </Card>
+  );
+}
+
+// "Warten auf Leads" Komponente mit Animation
+function WaitingForLeadsState() {
+  return (
+    <Card className="border-2 border-dashed border-yellow-300 bg-yellow-50">
+      <CardContent className="flex flex-col items-center justify-center py-12 px-6 text-center">
+        {/* Animiertes Icon */}
+        <div className="relative mb-6">
+          <Hourglass className="w-16 h-16 text-yellow-600 animate-pulse" />
+          <div className="absolute -top-1 -right-1">
+            <div className="w-4 h-4 bg-yellow-400 rounded-full animate-ping"></div>
+          </div>
+        </div>
+        
+        {/* Nachricht */}
+        <h3 className="text-xl font-semibold text-yellow-800 mb-3">
+          Warten auf neue Leads...
+        </h3>
+        
+        <p className="text-yellow-700 mb-6 max-w-md leading-relaxed">
+          Derzeit warten wir auf neue Leads. Starte einen neuen Vorgang auf der 
+          <strong> 'Lead Scraping'</strong>-Seite. Diese Ansicht aktualisiert sich 
+          automatisch, sobald die Ergebnisse eintreffen.
+        </p>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button asChild className="bg-yellow-600 hover:bg-yellow-700">
+            <a href="/lead-agent">
+              <Play className="w-4 h-4 mr-2" />
+              Neuen Scrape starten
+            </a>
+          </Button>
+          
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Aktualisieren
+          </Button>
+        </div>
+        
+        {/* Auto-Refresh Indikator */}
+        <div className="flex items-center gap-2 mt-4 text-sm text-yellow-600">
+          <Clock className="w-4 h-4" />
+          <span>Automatische Aktualisierung alle 30 Sekunden</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // UI-Komponente für Personalisierungs-Optionen
@@ -749,6 +855,57 @@ const Personalization = () => {
     fetchLeads();
   }, []);
 
+  // Auto-refresh alle 30 Sekunden für neue Leads
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing leads...');
+      fetchLeads();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Anreicherungs-Service-Handler
+  const handleEnrichmentAction = async (leadId: string, service: string) => {
+    const { webhookSettings } = useWebhookStorageLocal();
+    const webhookUrl = webhookSettings.global_webhook_url;
+    
+    if (!webhookUrl) {
+      throw new Error('Keine Webhook-URL konfiguriert');
+    }
+
+    // Finde den Lead
+    const lead = leadGroups.flatMap(g => g.leads).find(l => l.id === leadId);
+    if (!lead) {
+      throw new Error('Lead nicht gefunden');
+    }
+
+    // Payload für N8N Webhook
+    const payload = {
+      lead_id: leadId,
+      service: service,
+      lead_data: {
+        full_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim(),
+        email: lead.email || lead.raw_scraped_data?.email,
+        company: lead.company_name || lead.raw_scraped_data?.company,
+        linkedin_url: lead.person_linkedin_url || lead.raw_scraped_data?.linkedinUrl,
+        website: lead.website || lead.raw_scraped_data?.website
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    // Webhook aufrufen
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webhook-Fehler: ${response.status}`);
+    }
+  };
+
   // Gesamtstatistiken berechnen
   const totalStats = {
     totalLeads: leadGroups.reduce((sum, group) => sum + group.leads.filter(l => !group.deletedLeadIds.has(l.id)).length, 0),
@@ -851,37 +1008,98 @@ const Personalization = () => {
                 </Card>
               </div>
 
-              {/* Lead-Gruppen */}
-              {isLoading ? <div className="flex justify-center items-center h-64">
+              {/* Lead-Übersicht */}
+              {isLoading ? (
+                <div className="flex justify-center items-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div> : leadGroups.length === 0 ? <Card>
-                  <CardContent className="flex flex-col items-center justify-center h-64">
-                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                      Keine Leads im Posteingang
-                    </h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      {errorMessage ? 'Fehler beim Laden der Daten.' : 'Alle Leads wurden bereits personalisiert oder es wurden noch keine Leads gescraped.'}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button onClick={fetchLeads} variant="outline">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Erneut laden
-                      </Button>
-                      <Button asChild>
-                        <a href="/lead-agent">Zur Lead-Generierung</a>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card> : <div className="space-y-4">
+                  <span className="ml-2 text-muted-foreground">Lade Leads...</span>
+                </div>
+              ) : totalStats.totalLeads === 0 ? (
+                <WaitingForLeadsState />
+              ) : (
+                <div className="space-y-6">
+                  {/* Lead-Grid Header */}
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Scrape-Jobs ({leadGroups.length})
-                    </h2>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-gray-900">
+                        Lead-Übersicht ({totalStats.totalLeads} Leads)
+                      </h2>
+                      <p className="text-gray-600 mt-1">
+                        Klicke auf die Service-Buttons um individuelle Anreicherungen zu starten
+                      </p>
+                    </div>
+                    <Button onClick={fetchLeads} variant="outline" size="sm">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Aktualisieren
+                    </Button>
                   </div>
-                  
-                  {leadGroups.map(group => <LeadGroupCard key={group.scrape_job_id || 'unknown'} group={group} isExpanded={expandedGroups.has(group.scrape_job_id || 'unknown')} onToggle={() => toggleGroup(group.scrape_job_id || 'unknown')} onUpdateGroup={updateGroup} webhookUrl={webhookSettings.global_webhook_url} />)}
-                </div>}
+
+                  {/* Leads als Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {leadGroups.flatMap(group => 
+                      group.leads
+                        .filter(lead => !group.deletedLeadIds.has(lead.id))
+                        .map(lead => (
+                          <LeadCard
+                            key={lead.id}
+                            lead={lead}
+                            onDelete={(leadId) => {
+                              // Update the specific group
+                              const updatedGroups = leadGroups.map(g => {
+                                if (g.scrape_job_id === group.scrape_job_id) {
+                                  const newDeletedIds = new Set(g.deletedLeadIds);
+                                  newDeletedIds.add(leadId);
+                                  return { ...g, deletedLeadIds: newDeletedIds };
+                                }
+                                return g;
+                              });
+                              setLeadGroups(updatedGroups);
+                            }}
+                            onEnrichmentAction={handleEnrichmentAction}
+                          />
+                        ))
+                    )}
+                  </div>
+
+                  {/* Scrape-Job Gruppierung (optional einklappbar) */}
+                  <div className="mt-8">
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between">
+                          <span>Gruppierung nach Scrape-Jobs anzeigen ({leadGroups.length} Jobs)</span>
+                          <ChevronDown className="w-4 h-4" />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-4 mt-4">
+                        {leadGroups.map(group => (
+                          <Card key={group.scrape_job_id || 'unknown'} className="border-l-4 border-l-gray-400">
+                            <CardHeader>
+                              <CardTitle className="flex items-center gap-2 text-lg">
+                                <FolderOpen className="w-5 h-5 text-gray-600" />
+                                {group.scrape_job_name}
+                              </CardTitle>
+                              <CardDescription className="flex items-center gap-4">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {group.date}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  {group.leads.filter(l => !group.deletedLeadIds.has(l.id)).length} Leads
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MailCheck className="w-4 h-4" />
+                                  {group.withEmail} mit E-Mail
+                                </span>
+                              </CardDescription>
+                            </CardHeader>
+                          </Card>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                </div>
+              )}
             </div>
           </main>
         </div>
