@@ -51,11 +51,18 @@ export function SimplifiedLeadAgent() {
   const isAnyChatConfigured = isEmbedChatAvailable || isProperChatAvailable;
 
   // Ensure customizations have proper boolean types
+  // Handle both string and boolean values
   const normalizedCustomizations = {
     ...customizations,
-    autoOpen: customizations.autoOpen === 'true' || customizations.autoOpen === true,
-    showTypingIndicator: customizations.showTypingIndicator === 'true' || customizations.showTypingIndicator === true,
-    allowFileUpload: customizations.allowFileUpload === 'true' || customizations.allowFileUpload === true
+    autoOpen: typeof customizations.autoOpen === 'string' 
+      ? customizations.autoOpen === 'true' 
+      : Boolean(customizations.autoOpen),
+    showTypingIndicator: typeof customizations.showTypingIndicator === 'string'
+      ? customizations.showTypingIndicator === 'true'
+      : Boolean(customizations.showTypingIndicator),
+    allowFileUpload: typeof customizations.allowFileUpload === 'string'
+      ? customizations.allowFileUpload === 'true'
+      : Boolean(customizations.allowFileUpload)
   };
 
   if (!isAnyChatConfigured) {
