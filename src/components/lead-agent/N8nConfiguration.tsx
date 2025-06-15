@@ -3,12 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TestTube, Bug } from "lucide-react";
+import { TestTube, Bug, Activity, FileText } from "lucide-react";
 import { useN8nConnectionTest } from "./hooks/useN8nConnectionTest";
 import { N8nTestResult } from "./components/N8nTestResult";
 import { N8nSetupRecommendations } from "./components/N8nSetupRecommendations";
 import { N8nConfigurationGuide } from "./N8nConfigurationGuide";
 import { N8nWorkflowDebugger } from "./components/N8nWorkflowDebugger";
+import { N8nComprehensiveDiagnostics } from "./components/N8nComprehensiveDiagnostics";
+import { N8nWorkflowTemplates } from "./components/N8nWorkflowTemplates";
 import { getStatusIcon, getStatusColor } from "./utils/n8nStatusUtils";
 import { useState } from "react";
 
@@ -20,6 +22,8 @@ interface N8nConfigurationProps {
 export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigurationProps) {
   const { connectionStatus, testResult, testConnection } = useN8nConnectionTest();
   const [showDebugger, setShowDebugger] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const handleTestConnection = () => {
     testConnection(webhookUrl);
@@ -50,7 +54,7 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
             <Button
               onClick={handleTestConnection}
               disabled={!webhookUrl || connectionStatus === 'testing'}
@@ -59,9 +63,18 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
               className="flex-1"
             >
               <TestTube className="w-4 h-4 mr-2" />
-              {connectionStatus === 'testing' ? "Teste..." : "Verbindung testen"}
+              {connectionStatus === 'testing' ? "Teste..." : "Schnelltest"}
             </Button>
             
+            <Button
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              variant="outline"
+              size="sm"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Volldiagnose
+            </Button>
+
             <Button
               onClick={() => setShowDebugger(!showDebugger)}
               variant="outline"
@@ -70,6 +83,15 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
               <Bug className="w-4 h-4 mr-2" />
               Debug
             </Button>
+
+            <Button
+              onClick={() => setShowTemplates(!showTemplates)}
+              variant="outline"
+              size="sm"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Vorlagen
+            </Button>
           </div>
 
           {testResult && <N8nTestResult testResult={testResult} />}
@@ -77,6 +99,16 @@ export function N8nConfiguration({ webhookUrl, onWebhookUrlChange }: N8nConfigur
           <N8nSetupRecommendations />
         </div>
       </Card>
+
+      {/* Enhanced Comprehensive Diagnostics */}
+      <N8nComprehensiveDiagnostics
+        webhookUrl={webhookUrl}
+        isVisible={showDiagnostics}
+        onToggleVisibility={() => setShowDiagnostics(!showDiagnostics)}
+      />
+
+      {/* Workflow Templates */}
+      {showTemplates && <N8nWorkflowTemplates />}
 
       {/* Enhanced Workflow Debugger */}
       <N8nWorkflowDebugger

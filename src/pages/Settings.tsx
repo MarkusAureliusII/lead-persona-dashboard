@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -18,6 +19,7 @@ import {
 import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
 import { N8nChatWidgetConfig } from "@/components/lead-agent/N8nChatWidgetConfig";
 import { N8nChatWidgetManager } from "@/components/lead-agent/N8nChatWidgetManager";
+import { N8nUnifiedConfigurationManager } from "@/components/lead-agent/N8nUnifiedConfigurationManager";
 import { useWebhookConfig } from "@/hooks/useWebhookConfig";
 import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
 
