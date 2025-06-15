@@ -9,6 +9,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import LeadAgent from "./pages/LeadAgent";
 import Personalization from "./pages/Personalization";
+import Crm from "./pages/Crm";
+import ScrapingJobs from "./pages/ScrapingJobs";
 import Integrations from "./pages/Integrations";
 import Statistics from "./pages/Statistics";
 import Settings from "./pages/Settings";
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/lead-agent" element={<ProtectedRoute><LeadAgent /></ProtectedRoute>} />
             <Route path="/personalization" element={<ProtectedRoute><Personalization /></ProtectedRoute>} />
+            <Route path="/crm" element={<ProtectedRoute><Crm /></ProtectedRoute>} />
+            <Route path="/scraping-jobs" element={<ProtectedRoute><ScrapingJobs /></ProtectedRoute>} />
             <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
             <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

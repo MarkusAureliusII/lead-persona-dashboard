@@ -180,8 +180,8 @@ function LeadCard({
           {/* E-Mail */}
           {getEmail() ? (
             <div className="flex items-center gap-2 text-sm">
-              <MailCheck size={14} className="text-green-600" />
-              <span className="text-green-700 font-medium">{getEmail()}</span>
+              <MailCheck size={14} className="text-blue-600" />
+              <span className="text-blue-700 font-medium">{getEmail()}</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -642,27 +642,13 @@ function LeadGroupCard({
         payloadSize: `${Math.round(JSON.stringify(batchPayload).length / 1024)} KB`
       });
 
-      // Add timeout and better error handling
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.error('❌ Request timed out after 30 seconds');
-      }, 30000); // 30 second timeout
-
       const response = await fetch(localWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Batch-Mode': 'true',
-          'X-Batch-Size': batchPayload.batchSize.toString(),
-          'Accept': 'application/json',
-          'User-Agent': 'Lead-Persona-Dashboard/1.0',
         },
-        body: JSON.stringify(batchPayload),
-        signal: controller.signal
+        body: JSON.stringify(batchPayload)
       });
-
-      clearTimeout(timeoutId);
       
       console.log('📡 Response status:', response.status, response.statusText);
       console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
@@ -685,37 +671,9 @@ function LeadGroupCard({
     } catch (error) {
       console.error('❌ Failed to send batch webhook:', error);
       
-      let errorMessage = 'Unbekannter Fehler';
-      let errorDetails = '';
-
-      if (error instanceof Error) {
-        errorMessage = error.message;
-        
-        // Provide specific guidance based on error type
-        if (error.name === 'AbortError') {
-          errorMessage = 'Request timed out after 30 seconds';
-          errorDetails = 'The n8n webhook took too long to respond. Check if n8n is running and accessible.';
-        } else if (errorMessage.includes('NetworkError') || errorMessage.includes('fetch')) {
-          errorDetails = 'Cannot reach the webhook URL. Check if: 1) n8n is running, 2) URL is correct, 3) CORS is configured, 4) no firewall blocking.';
-        } else if (errorMessage.includes('CORS')) {
-          errorDetails = 'CORS error: Your n8n webhook needs to allow requests from this domain.';
-        } else if (errorMessage.includes('SSL') || errorMessage.includes('certificate')) {
-          errorDetails = 'SSL/Certificate error: Try using HTTP instead of HTTPS for testing.';
-        }
-      }
-
-      console.log('🔍 Debugging info:', {
-        errorType: error?.constructor?.name,
-        errorMessage,
-        webhookUrl: localWebhookUrl,
-        payloadSize: `${Math.round(JSON.stringify(batchPayload).length / 1024)} KB`,
-        leadsCount: batchPayload.leads.length,
-        timestamp: new Date().toISOString()
-      });
-      
       toast({
         title: "Fehler beim Senden der Batch-Anfrage",
-        description: errorDetails || errorMessage,
+        description: `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
         variant: "destructive"
       });
     }
@@ -882,7 +840,7 @@ const Personalization = () => {
     try {
       console.log('📊 Fetching all leads from database...');
       
-      // Alle Leads laden
+      // Nur neue Leads laden (status = 'new')
       const { data, error } = await supabase
         .from('leads')
         .select(`
@@ -892,6 +850,7 @@ const Personalization = () => {
             started_at
           )
         `)
+        .eq('status', 'new')  // Nur neue, unbearbeitete Leads
         .order('created_at', { ascending: false })
         .limit(200);
 
@@ -907,8 +866,8 @@ const Personalization = () => {
       }
 
       if (!data || data.length === 0) {
-        console.log('⚠️ No leads found');
-        setErrorMessage('Keine Leads gefunden');
+        console.log('⚠️ No new leads found');
+        setErrorMessage('Keine neuen Leads gefunden');
         setLeadGroups([]);
         return;
       }
@@ -1027,10 +986,10 @@ const Personalization = () => {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                  <Wand2 /> Personalization
+                  <Wand2 /> Posteingang
                 </h1>
                 <p className="text-gray-600">
-                  Leads nach Scrape-Jobs organisiert. Wähle Personalisierungs-Optionen und verwalte deine Lead-Datenbank.
+                  Neue, unbearbeitete Leads aus Scraping-Vorgängen. Wähle Personalisierungs-Optionen für die Weiterverarbeitung.
                 </p>
               </div>
 
@@ -1148,10 +1107,10 @@ const Personalization = () => {
                   <CardContent className="flex flex-col items-center justify-center h-64">
                     <Users className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                      Keine Leads gefunden
+                      Posteingang ist leer
                     </h3>
                     <p className="text-muted-foreground text-center mb-4">
-                      {errorMessage ? 'Fehler beim Laden der Daten.' : 'Es wurden noch keine Leads importiert.'}
+                      {errorMessage ? 'Fehler beim Laden der Daten.' : 'Keine neuen Leads zur Bearbeitung vorhanden. Alle Leads wurden bereits verarbeitet.'}
                     </p>
                     <div className="flex gap-2">
                       <Button onClick={fetchLeads} variant="outline">

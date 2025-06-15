@@ -5,7 +5,10 @@ import {
   Settings,
   Home,
   Wand2,
-  Zap
+  Zap,
+  Database,
+  Users,
+  Inbox
 } from "lucide-react";
 
 import {
@@ -32,9 +35,19 @@ const menuItems = [
     icon: Bot,
   },
   {
-    title: "Personalization",
+    title: "Posteingang",
     url: "/personalization",
-    icon: Wand2,
+    icon: Inbox,
+  },
+  {
+    title: "CRM",
+    url: "/crm",
+    icon: Users,
+  },
+  {
+    title: "Scraping-Vorgänge",
+    url: "/scraping-jobs",
+    icon: Database,
   },
   {
     title: "Statistics",

@@ -21,20 +21,6 @@ export interface N8nWebhookPayload {
     privateLinkedIn: boolean;
     companyLinkedIn: boolean;
   };
-  // Batch processing fields
-  batchMode?: boolean;
-  batchSize?: number;
-  leads?: Array<{
-    index: number;
-    leadData: any;
-    targetAudience: {
-      industry: string;
-      companySize: string;
-      jobTitle: string;
-      location: string;
-      techStack?: string;
-    };
-  }>;
 }
 
 export interface SearchParameters {
@@ -46,14 +32,6 @@ export interface SearchParameters {
   estimatedLeads?: number;
 }
 
-export interface N8nBatchResult {
-  success: boolean;
-  message?: string;
-  aiResponse?: string;
-  error?: string;
-  index?: number;
-}
-
 export interface N8nResponse {
   success: boolean;
   message: string;
@@ -62,9 +40,6 @@ export interface N8nResponse {
   error?: string;
   debug?: any;
   responseType?: 'json' | 'text' | 'html' | 'unknown' | 'fallback';
-  // Batch processing fields
-  batchResults?: N8nBatchResult[];
-  batchSize?: number;
 }
 
 export type ResponseType = 'json' | 'text' | 'html' | 'unknown' | 'fallback';

@@ -38,59 +38,6 @@ export class N8nResponseParser {
 
     let aiResponse = "";
     let searchParameters = undefined;
-    let batchResults = undefined;
-    let batchSize = undefined;
-
-    // Check for batch processing response
-    if (data.batchResults && Array.isArray(data.batchResults)) {
-      console.log("📦 Processing batch response with", data.batchResults.length, "results");
-      batchResults = data.batchResults.map((result: any, index: number) => ({
-        success: result.success !== false,
-        message: result.message,
-        aiResponse: result.aiResponse || result.ai_response || result.response || result.output,
-        error: result.error,
-        index: result.index !== undefined ? result.index : index
-      }));
-      batchSize = data.batchSize || data.batchResults.length;
-      
-      return {
-        success: true,
-        message: `Batch processing completed for ${batchResults.length} leads`,
-        responseType: responseType,
-        batchResults: batchResults,
-        batchSize: batchSize,
-        debug: {
-          requestId,
-          rawResponse: data,
-          batchProcessing: true,
-        },
-      };
-    }
-
-    // Handle array of results (alternative batch format)
-    if (Array.isArray(data) && data.length > 0 && data[0].aiResponse) {
-      console.log("📦 Processing array response as batch with", data.length, "results");
-      batchResults = data.map((result: any, index: number) => ({
-        success: result.success !== false,
-        message: result.message,
-        aiResponse: result.aiResponse || result.ai_response || result.response || result.output,
-        error: result.error,
-        index: result.index !== undefined ? result.index : index
-      }));
-      
-      return {
-        success: true,
-        message: `Batch processing completed for ${batchResults.length} leads`,
-        responseType: responseType,
-        batchResults: batchResults,
-        batchSize: batchResults.length,
-        debug: {
-          requestId,
-          rawResponse: data,
-          batchProcessing: true,
-        },
-      };
-    }
 
     // Strategy 1: Check for direct AI response fields
     if (data.aiResponse) {
