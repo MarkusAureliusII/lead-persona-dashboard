@@ -2,15 +2,16 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Copy } from "lucide-react";
+import { ExternalLink, Copy, RotateCcw } from "lucide-react";
 import { SearchParameters } from "@/types/leadAgent";
 import { useState } from "react";
 
 interface ApolloSearchPreviewProps {
   searchParameters: SearchParameters;
+  onParametersReuse?: (parameters: SearchParameters) => void;
 }
 
-export function ApolloSearchPreview({ searchParameters }: ApolloSearchPreviewProps) {
+export function ApolloSearchPreview({ searchParameters, onParametersReuse }: ApolloSearchPreviewProps) {
   const [copied, setCopied] = useState(false);
 
   const generateApolloLink = (params: SearchParameters): string => {
@@ -32,6 +33,12 @@ export function ApolloSearchPreview({ searchParameters }: ApolloSearchPreviewPro
       await navigator.clipboard.writeText(apolloLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleReuseParameters = () => {
+    if (onParametersReuse) {
+      onParametersReuse(searchParameters);
     }
   };
 
@@ -121,6 +128,18 @@ export function ApolloSearchPreview({ searchParameters }: ApolloSearchPreviewPro
                   In Apollo öffnen
                 </a>
               </Button>
+
+              {onParametersReuse && (
+                <Button
+                  onClick={handleReuseParameters}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Parameter wiederverwenden
+                </Button>
+              )}
             </div>
           </div>
         </div>
