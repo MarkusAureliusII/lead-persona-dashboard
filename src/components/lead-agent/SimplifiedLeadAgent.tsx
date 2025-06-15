@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -50,6 +49,14 @@ export function SimplifiedLeadAgent() {
   const isEmbedChatAvailable = embedUrl;
   const isProperChatAvailable = isWidgetEnabled && widgetUrl;
   const isAnyChatConfigured = isEmbedChatAvailable || isProperChatAvailable;
+
+  // Ensure customizations have proper boolean types
+  const normalizedCustomizations = {
+    ...customizations,
+    autoOpen: Boolean(customizations.autoOpen),
+    showTypingIndicator: Boolean(customizations.showTypingIndicator),
+    allowFileUpload: Boolean(customizations.allowFileUpload)
+  };
 
   if (!isAnyChatConfigured) {
     return (
@@ -140,7 +147,7 @@ export function SimplifiedLeadAgent() {
           {isProperChatAvailable && (chatMode === 'widget' || !isEmbedChatAvailable) ? (
             <N8nProperChatWidget
               webhookUrl={widgetUrl}
-              customizations={customizations}
+              customizations={normalizedCustomizations}
               onParametersGenerated={handleParametersGenerated}
               showDebug={false}
             />
