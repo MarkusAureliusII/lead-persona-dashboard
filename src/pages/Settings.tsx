@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -13,10 +12,12 @@ import {
   Mail, 
   Shield,
   Bell,
-  Webhook
+  Webhook,
+  MessageSquare
 } from "lucide-react";
 import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
 import { N8nChatWidgetConfig } from "@/components/lead-agent/N8nChatWidgetConfig";
+import { N8nChatWidgetManager } from "@/components/lead-agent/N8nChatWidgetManager";
 import { useWebhookConfig } from "@/hooks/useWebhookConfig";
 import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
 
@@ -66,7 +67,23 @@ const Settings = () => {
                   </CardContent>
                 </Card>
 
-                {/* n8n Chat Widget Configuration */}
+                {/* Erweiterte n8n Chat Widget Konfiguration */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5" />
+                      Erweiterte Chat Widget Konfiguration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Vollständige Konfiguration des @n8n/chat Widgets mit erweiterten Features
+                    </p>
+                    <N8nChatWidgetManager showConfiguration={true} />
+                  </CardContent>
+                </Card>
+
+                {/* Legacy n8n Chat Widget Configuration */}
                 <N8nChatWidgetConfig
                   widgetUrl={widgetUrl}
                   onWidgetUrlChange={handleWidgetUrlChange}
