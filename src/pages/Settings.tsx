@@ -11,6 +11,7 @@ import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { N8nChatSettings } from "@/components/settings/N8nChatSettings";
 import { LeadProcessingSettings } from "@/components/settings/LeadProcessingSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
+import { WebhookSettings } from "@/components/settings/WebhookSettings";
 
 const Settings = () => {
   return (
@@ -27,13 +28,10 @@ const Settings = () => {
               />
 
               <Tabs defaultValue="profile" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-7">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="profile">Profil</TabsTrigger>
-                  <TabsTrigger value="processing">Lead Processing</TabsTrigger>
-                  <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
+                  <TabsTrigger value="webhooks">N8N Webhooks</TabsTrigger>
                   <TabsTrigger value="integrations">Integrationen</TabsTrigger>
-                  <TabsTrigger value="personalization">Personalisierung</TabsTrigger>
-                  <TabsTrigger value="chat">Chat Widget</TabsTrigger>
                   <TabsTrigger value="privacy">Datenschutz</TabsTrigger>
                 </TabsList>
 
@@ -41,24 +39,12 @@ const Settings = () => {
                   <ProfileSettings />
                 </TabsContent>
 
-                <TabsContent value="processing">
-                  <LeadProcessingSettings />
-                </TabsContent>
-
-                <TabsContent value="notifications">
-                  <NotificationSettings />
+                <TabsContent value="webhooks">
+                  <WebhookSettings />
                 </TabsContent>
 
                 <TabsContent value="integrations">
                   <IntegrationSettings />
-                </TabsContent>
-
-                <TabsContent value="personalization">
-                  <PersonalizationSettings />
-                </TabsContent>
-
-                <TabsContent value="chat">
-                  <N8nChatSettings />
                 </TabsContent>
 
                 <TabsContent value="privacy">

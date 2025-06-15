@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from '@/lib/supabase';
+import { useWebhookStorage } from '@/hooks/useWebhookStorage';
 import { 
   Loader2, 
   Users, 
@@ -802,8 +803,14 @@ const Personalization = () => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [globalWebhookUrl, setGlobalWebhookUrl] = useState<string>('');
   const { toast } = useToast();
+  const { 
+    webhookSettings, 
+    updateWebhookUrl, 
+    autoSave, 
+    isLoading: isLoadingWebhooks,
+    isSaving: isSavingWebhooks 
+  } = useWebhookStorage();
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
@@ -1006,18 +1013,47 @@ const Personalization = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <Label htmlFor="global-webhook-url">Standard Webhook URL</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="global-webhook-url">Standard Webhook URL</Label>
+                      {isSavingWebhooks && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Speichere...
+                        </div>
+                      )}
+                    </div>
                     <Input
                       id="global-webhook-url"
                       type="url"
                       placeholder="https://your-webhook.com/endpoint"
-                      value={globalWebhookUrl}
-                      onChange={(e) => setGlobalWebhookUrl(e.target.value)}
+                      value={webhookSettings.global_webhook_url}
+                      onChange={(e) => {
+                        updateWebhookUrl('global_webhook_url', e.target.value);
+                      }}
+                      onBlur={() => autoSave()}
                       className="font-mono text-sm"
+                      disabled={isLoadingWebhooks}
                     />
-                    <p className="text-xs text-gray-500">
-                      Du kannst diese URL für einzelne Scrape-Jobs überschreiben.
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">
+                        Du kannst diese URL für einzelne Scrape-Jobs überschreiben.
+                      </p>
+                      <Button 
+                        onClick={autoSave} 
+                        size="sm" 
+                        variant="outline"
+                        disabled={isSavingWebhooks}
+                      >
+                        {isSavingWebhooks ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                            Speichere...
+                          </>
+                        ) : (
+                          'Speichern'
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1138,7 +1174,7 @@ const Personalization = () => {
                       isExpanded={expandedGroups.has(group.scrape_job_id || 'unknown')}
                       onToggle={() => toggleGroup(group.scrape_job_id || 'unknown')}
                       onUpdateGroup={updateGroup}
-                      webhookUrl={globalWebhookUrl}
+                      webhookUrl={webhookSettings.global_webhook_url}
                     />
                   ))}
                 </div>
