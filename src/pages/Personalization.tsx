@@ -270,26 +270,7 @@ function PersonalizationOptionsCard({
   };
   return <div className="space-y-4">
       {/* Webhook URL Eingabe */}
-      <Card className="bg-gray-50 border-gray-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-            <Link className="w-5 h-5" />
-            Webhook URL (Test)
-          </CardTitle>
-          <CardDescription className="text-gray-600">
-            Gib die Webhook URL ein, an die die Leads gesendet werden sollen.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="webhook-url">Webhook URL</Label>
-            <Input id="webhook-url" type="url" placeholder="https://your-webhook.com/endpoint" value={webhookUrl} onChange={e => onWebhookUrlChange(e.target.value)} className="font-mono text-sm" />
-            <p className="text-xs text-gray-500">
-              Die Leads werden als JSON POST Request an diese URL gesendet.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      
 
       {/* Personalisierungs-Optionen */}
       <Card className="bg-blue-50 border-blue-200">
