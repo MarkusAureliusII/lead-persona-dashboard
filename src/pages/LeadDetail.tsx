@@ -30,27 +30,27 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Lead {
   id: string;
-  name: string;
-  company: string;
-  email: string;
-  phone: string;
-  phone_number: string;
-  website: string;
-  linkedin_url: string;
-  company_linkedin_url: string;
-  city: string;
-  country: string;
+  name: string | null;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+  phone_number: string | null;
+  website: string | null;
+  linkedin_url: string | null;
+  company_linkedin_url: string | null;
+  city: string | null;
+  country: string | null;
   created_at: string;
-  is_personal_linkedin_analyzed: boolean;
-  is_email_verified: boolean;
-  is_company_linkedin_analyzed: boolean;
-  is_website_analyzed: boolean;
-  is_custom_field_1_analyzed: boolean;
-  analysis_text_personal_linkedin: string;
-  analysis_text_company_linkedin: string;
-  analysis_text_website: string;
-  email_verification_status: string;
-  is_email_verification_processed: boolean;
+  is_personal_linkedin_analyzed: boolean | null;
+  is_email_verified: boolean | null;
+  is_company_linkedin_analyzed: boolean | null;
+  is_website_analyzed: boolean | null;
+  is_custom_field_1_analyzed: boolean | null;
+  analysis_text_personal_linkedin: string | null;
+  analysis_text_company_linkedin: string | null;
+  analysis_text_website: string | null;
+  email_verification_status: string | null;
+  is_email_verification_processed: boolean | null;
 }
 
 const BooleanStatus = ({ 
@@ -59,7 +59,7 @@ const BooleanStatus = ({
   icon: Icon 
 }: { 
   label: string; 
-  value: boolean; 
+  value: boolean | null; 
   icon: React.ComponentType<{ className?: string }>;
 }) => (
   <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -68,7 +68,7 @@ const BooleanStatus = ({
       <span className="font-medium">{label}</span>
     </div>
     <div className="flex items-center gap-2">
-      {value ? (
+      {value === true ? (
         <>
           <Check className="w-5 h-5 text-green-600" />
           <span className="text-green-600 font-medium">Ja</span>
@@ -88,7 +88,7 @@ const EmailStatusDisplay = ({
   isProcessed 
 }: { 
   status: string | null; 
-  isProcessed: boolean;
+  isProcessed: boolean | null;
 }) => {
   const getStatusColor = (status: string | null) => {
     if (!status) return 'text-gray-500';
@@ -302,7 +302,7 @@ const LeadDetail = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="w-6 h-6" />
-                    {lead.name}
+                    {lead.name || 'Unbekannter Name'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

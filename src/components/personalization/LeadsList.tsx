@@ -16,13 +16,13 @@ import { Check, X, Filter, Download } from "lucide-react";
 
 interface Lead {
   id: string;
-  name: string;
-  company: string;
+  name: string | null;
+  company: string | null;
   created_at: string;
-  is_personal_linkedin_analyzed: boolean;
-  is_email_verified: boolean;
-  is_company_linkedin_analyzed: boolean;
-  is_website_analyzed: boolean;
+  is_personal_linkedin_analyzed: boolean | null;
+  is_email_verified: boolean | null;
+  is_company_linkedin_analyzed: boolean | null;
+  is_website_analyzed: boolean | null;
 }
 
 interface Filters {
@@ -32,8 +32,8 @@ interface Filters {
   is_website_analyzed: boolean;
 }
 
-const BooleanIcon = ({ value }: { value: boolean }) => (
-  value ? (
+const BooleanIcon = ({ value }: { value: boolean | null }) => (
+  value === true ? (
     <Check className="w-4 h-4 text-green-600" />
   ) : (
     <X className="w-4 h-4 text-red-600" />
@@ -283,8 +283,8 @@ export function LeadsList() {
                 className="cursor-pointer hover:bg-gray-50"
                 onClick={() => window.open(`/lead/${lead.id}`, '_blank')}
               >
-                <TableCell className="font-medium">{lead.name}</TableCell>
-                <TableCell>{lead.company}</TableCell>
+                <TableCell className="font-medium">{lead.name || 'Unbekannt'}</TableCell>
+                <TableCell>{lead.company || 'Unbekannt'}</TableCell>
                 <TableCell>
                   {new Date(lead.created_at).toLocaleDateString('de-DE')}
                 </TableCell>
