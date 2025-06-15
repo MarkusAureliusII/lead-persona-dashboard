@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import type { N8nChatCustomizations } from '@/hooks/useN8nConfig';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,44 +17,49 @@ export function N8nChatWidget({ webhookUrl, customizations, onParametersGenerate
   const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('idle');
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
-  useEffect(() => {
+  const initializeChat = async () => {
     if (!webhookUrl || !chatContainerRef.current) {
       setStatus('idle');
       return;
     }
+    
+    setStatus('loading');
+    setErrorDetails(null);
+    try {
+      const { createChat } = await import('@n8n/chat');
+      
+      if (chatInstanceRef.current?.unmount) {
+        chatInstanceRef.current.unmount();
+      }
+      const chatConfig = {
+        webhookUrl,
+        target: chatContainerRef.current!,
+        mode: 'window' as const,
+        chatInputKey: 'chatInput',
+        theme: {
+          '--chat--background': customizations.theme === 'dark' ? '#1f2937' : '#ffffff',
+          '--chat--text-color': customizations.theme === 'dark' ? '#f3f4f6' : '#1f2937',
+        },
+        initialMessages: customizations.welcomeMessage ? [customizations.welcomeMessage] : undefined,
+      };
+      const chatInstance = createChat(chatConfig);
+      chatInstanceRef.current = chatInstance;
+      setStatus('connected');
+    } catch (error) {
+      console.error("Failed to initialize n8n chat widget:", error);
+      setStatus('error');
+      setErrorDetails(error instanceof Error ? error.message : "Unbekannter Initialisierungsfehler");
+    }
+  };
+
+  useEffect(() => {
     let isMounted = true;
-    const initializeChat = async () => {
-      setStatus('loading');
-      setErrorDetails(null);
-      try {
-        const { createChat } = await import('@n8n/chat');
-        if (!isMounted) return;
-        if (chatInstanceRef.current?.unmount) {
-          chatInstanceRef.current.unmount();
-        }
-        const chatConfig = {
-          webhookUrl,
-          target: chatContainerRef.current!,
-          mode: 'window' as const,
-          chatInputKey: 'chatInput',
-          theme: {
-            '--chat--background': customizations.theme === 'dark' ? '#1f2937' : '#ffffff',
-            '--chat--text-color': customizations.theme === 'dark' ? '#f3f4f6' : '#1f2937',
-          },
-          initialMessages: customizations.welcomeMessage ? [customizations.welcomeMessage] : undefined,
-        };
-        const chatInstance = createChat(chatConfig);
-        chatInstanceRef.current = chatInstance;
-        setStatus('connected');
-      } catch (error) {
-        if (isMounted) {
-          console.error("Failed to initialize n8n chat widget:", error);
-          setStatus('error');
-          setErrorDetails(error instanceof Error ? error.message : "Unbekannter Initialisierungsfehler");
-        }
+    const initialize = async () => {
+      if (isMounted) {
+        await initializeChat();
       }
     };
-    initializeChat();
+    initialize();
     return () => {
       isMounted = false;
       if (chatInstanceRef.current?.unmount) {

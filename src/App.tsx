@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { N8nChatWidgetManager } from "@/components/lead-agent/N8nChatWidgetManager";
 import Index from "./pages/Index";
 import LeadAgent from "./pages/LeadAgent";
 import Personalization from "./pages/Personalization";
@@ -60,11 +59,6 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          
-          {/* Globales Chat Widget - wird auf allen geschützten Seiten angezeigt */}
-          <ProtectedRoute>
-            <N8nChatWidgetManager />
-          </ProtectedRoute>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

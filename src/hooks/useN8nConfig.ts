@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 
 export interface N8nChatCustomizations {
