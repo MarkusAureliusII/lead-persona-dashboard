@@ -13,7 +13,11 @@ import {
   Users,
   Download,
   RefreshCw,
-  Database
+  Database,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Play
 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,6 +33,69 @@ type ScrapeJob = {
   created_at: string;
 };
 
+// Status-Icon und Animation
+function StatusIcon({ status }: { status: string }) {
+  switch (status) {
+    case 'running':
+    case 'in_progress':
+      return <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />;
+    case 'completed':
+      return <CheckCircle className="w-5 h-5 text-green-600" />;
+    case 'failed':
+    case 'error':
+      return <AlertCircle className="w-5 h-5 text-red-600" />;
+    default:
+      return <Clock className="w-5 h-5 text-gray-600" />;
+  }
+}
+
+// Status-Badge mit Animation
+function StatusBadge({ status }: { status: string }) {
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case 'running':
+      case 'in_progress':
+        return { 
+          variant: 'default' as const, 
+          color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+          text: 'Läuft',
+          animate: true
+        };
+      case 'completed':
+        return { 
+          variant: 'default' as const, 
+          color: 'bg-green-100 text-green-800 border-green-200',
+          text: 'Abgeschlossen',
+          animate: false
+        };
+      case 'failed':
+      case 'error':
+        return { 
+          variant: 'destructive' as const, 
+          color: 'bg-red-100 text-red-800 border-red-200',
+          text: 'Fehler',
+          animate: false
+        };
+      default:
+        return { 
+          variant: 'secondary' as const, 
+          color: 'bg-gray-100 text-gray-800 border-gray-200',
+          text: status,
+          animate: false
+        };
+    }
+  };
+
+  const config = getStatusConfig(status);
+  
+  return (
+    <Badge className={`${config.color} ${config.animate ? 'animate-pulse' : ''}`}>
+      <StatusIcon status={status} />
+      <span className="ml-1">{config.text}</span>
+    </Badge>
+  );
+}
+
 // Job Card Komponente
 function JobCard({ job }: { job: ScrapeJob }) {
   const handleExport = () => {
@@ -37,8 +104,10 @@ function JobCard({ job }: { job: ScrapeJob }) {
     alert(`Export für ${job.job_name} würde hier gestartet werden.`);
   };
 
+  const isRunning = job.status === 'running' || job.status === 'in_progress';
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={`hover:shadow-md transition-shadow ${isRunning ? 'ring-2 ring-yellow-200' : ''}`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -57,9 +126,7 @@ function JobCard({ job }: { job: ScrapeJob }) {
               })}
             </div>
           </div>
-          <Badge variant={job.status === 'completed' ? 'default' : 'secondary'}>
-            {job.status}
-          </Badge>
+          <StatusBadge status={job.status} />
         </div>
       </CardHeader>
       
@@ -67,18 +134,48 @@ function JobCard({ job }: { job: ScrapeJob }) {
         <div className="space-y-4">
           {/* Statistiken */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{job.lead_count}</div>
-              <div className="text-sm text-blue-700">Leads gefunden</div>
-            </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-sm text-green-600">
-                {job.completed_at ? 'Abgeschlossen' : 'In Bearbeitung'}
+            <div className={`text-center p-3 rounded-lg ${isRunning ? 'bg-yellow-50 border border-yellow-200' : 'bg-blue-50'}`}>
+              <div className={`text-2xl font-bold ${isRunning ? 'text-yellow-600' : 'text-blue-600'}`}>
+                {job.lead_count}
+                {isRunning && <Loader2 className="w-4 h-4 inline ml-1 animate-spin" />}
               </div>
-              <div className="text-xs text-green-700">
+              <div className={`text-sm ${isRunning ? 'text-yellow-700' : 'text-blue-700'}`}>
+                {isRunning ? 'Leads gefunden (läuft)' : 'Leads gefunden'}
+              </div>
+            </div>
+            <div className={`text-center p-3 rounded-lg ${
+              job.completed_at 
+                ? 'bg-green-50' 
+                : job.status === 'failed' || job.status === 'error'
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-yellow-50 border border-yellow-200'
+            }`}>
+              <div className={`text-sm font-medium ${
+                job.completed_at 
+                  ? 'text-green-600' 
+                  : job.status === 'failed' || job.status === 'error'
+                  ? 'text-red-600'
+                  : 'text-yellow-600'
+              }`}>
+                {job.completed_at 
+                  ? 'Abgeschlossen' 
+                  : job.status === 'failed' || job.status === 'error'
+                  ? 'Fehlgeschlagen'
+                  : 'In Bearbeitung'
+                }
+              </div>
+              <div className={`text-xs ${
+                job.completed_at 
+                  ? 'text-green-700' 
+                  : job.status === 'failed' || job.status === 'error'
+                  ? 'text-red-700'
+                  : 'text-yellow-700'
+              }`}>
                 {job.completed_at 
                   ? new Date(job.completed_at).toLocaleDateString('de-DE')
-                  : 'Läuft...'
+                  : isRunning
+                  ? 'Läuft...'
+                  : 'Gestoppt'
                 }
               </div>
             </div>
@@ -143,25 +240,39 @@ const ScrapingJobs = () => {
         
         // Fallback: Zeige Demo-Daten wenn Tabelle nicht existiert
         if (error.message.includes('relation "scrape_jobs" does not exist')) {
+          // Simuliere steigenden Lead-Count für laufende Jobs
+          const minutesRunning = Math.floor((Date.now() - (Date.now() - 300000)) / 60000) + 5;
+          const dynamicLeadCount = Math.min(47 + Math.floor(minutesRunning * 2.3), 110); // Max 110 Leads
+
           const demoJobs: ScrapeJob[] = [
             {
               id: '1',
-              job_name: 'Demo Scrape Job #1',
-              started_at: new Date().toISOString(),
-              completed_at: new Date().toISOString(),
-              status: 'completed',
-              lead_count: 150,
-              source_url: 'https://example.com',
-              created_at: new Date().toISOString()
+              job_name: 'Entscheidungsträger_Dortmund_alle_Branchen_110MA_leads_2025',
+              started_at: new Date(Date.now() - 300000).toISOString(), // 5 Minuten ago
+              completed_at: null,
+              status: 'running',
+              lead_count: dynamicLeadCount,
+              source_url: 'https://app.apollo.io/searches/...',
+              created_at: new Date(Date.now() - 300000).toISOString()
             },
             {
               id: '2',
-              job_name: 'Demo Scrape Job #2',
-              started_at: new Date(Date.now() - 86400000).toISOString(),
-              completed_at: null,
-              status: 'running',
+              job_name: 'Marketing_München_Software_50MA_leads_2025',
+              started_at: new Date(Date.now() - 3600000).toISOString(), // 1 Stunde ago
+              completed_at: new Date(Date.now() - 300000).toISOString(),
+              status: 'completed',
+              lead_count: 150,
+              source_url: 'https://app.apollo.io/searches/...',
+              created_at: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+              id: '3',
+              job_name: 'Vertrieb_Berlin_Healthcare_200MA_leads_2025',
+              started_at: new Date(Date.now() - 86400000).toISOString(), // 1 Tag ago
+              completed_at: new Date(Date.now() - 82800000).toISOString(),
+              status: 'completed',
               lead_count: 89,
-              source_url: 'https://another-example.com',
+              source_url: 'https://app.apollo.io/searches/...',
               created_at: new Date(Date.now() - 86400000).toISOString()
             }
           ];
@@ -209,6 +320,22 @@ const ScrapingJobs = () => {
   useEffect(() => {
     fetchScrapeJobs();
   }, []);
+
+  // Auto-refresh für laufende Jobs
+  useEffect(() => {
+    const hasRunningJobs = jobs.some(job => 
+      job.status === 'running' || job.status === 'in_progress'
+    );
+
+    if (hasRunningJobs) {
+      const interval = setInterval(() => {
+        console.log('🔄 Auto-refreshing scrape jobs...');
+        fetchScrapeJobs();
+      }, 10000); // Alle 10 Sekunden aktualisieren
+
+      return () => clearInterval(interval);
+    }
+  }, [jobs]);
 
   // Statistiken berechnen
   const totalLeads = jobs.reduce((sum, job) => sum + job.lead_count, 0);
