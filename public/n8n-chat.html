@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>n8n Chat</title>
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+  <style>
+    /* Stellt sicher, dass der Chat den gesamten verfügbaren Platz ausfüllt */
+    html, body, #n8n-chat-container {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #f9fafb; /* Passend zum App-Hintergrund */
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="n8n-chat-container"></div>
+
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+    createChat({
+      // Deine n8n Webhook URL
+      webhookUrl: 'https://n8n-selfhost-u40339.vm.elestio.app/webhook/fa996958-1ecc-4644-bb93-34f060a170a3/chat',
+      
+      // Wichtig: 'fullscreen' Modus, um den Container komplett auszufüllen
+      mode: 'fullscreen',
+
+      // Ziel-Container innerhalb dieser HTML-Datei
+      target: '#n8n-chat-container',
+
+      // Funktion, um Nachrichten an die Hauptanwendung zu senden
+      onMessage: (message) => {
+        // Wir senden die komplette Nachricht an das übergeordnete Fenster (deine React-App)
+        window.parent.postMessage(message, '*');
+      }
+    });
+  </script>
+
+</body>
+</html>
