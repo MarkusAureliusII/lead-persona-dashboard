@@ -51,6 +51,17 @@ export function SimplifiedLeadAgent() {
   const isProperChatAvailable = isWidgetEnabled && widgetUrl;
   const isAnyChatConfigured = isEmbedChatAvailable || isProperChatAvailable;
 
+  // Ensure customizations have proper boolean types
+  const normalizedCustomizations = {
+    theme: customizations.theme,
+    position: customizations.position,
+    welcomeMessage: customizations.welcomeMessage,
+    language: customizations.language,
+    autoOpen: Boolean(customizations.autoOpen),
+    showTypingIndicator: Boolean(customizations.showTypingIndicator),
+    allowFileUpload: Boolean(customizations.allowFileUpload)
+  };
+
   if (!isAnyChatConfigured) {
     return (
       <div className="space-y-6">
@@ -140,7 +151,7 @@ export function SimplifiedLeadAgent() {
           {isProperChatAvailable && (chatMode === 'widget' || !isEmbedChatAvailable) ? (
             <N8nProperChatWidget
               webhookUrl={widgetUrl}
-              customizations={customizations}
+              customizations={normalizedCustomizations}
               onParametersGenerated={handleParametersGenerated}
               showDebug={false}
             />
