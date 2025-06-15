@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from '@/lib/supabase';
 import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
+import { usePersistedForm } from '@/hooks/usePersistedState';
 import { Loader2, Users, MailCheck, Globe, Building, Wand2, RefreshCw, ChevronDown, ChevronRight, Calendar, FolderOpen, FolderClosed, Phone, MapPin, ExternalLink, Linkedin, Play, Trash2, Filter, X, Link } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
@@ -386,7 +387,12 @@ function LeadGroupCard({
   const {
     toast
   } = useToast();
-  const [localWebhookUrl, setLocalWebhookUrl] = useState(webhookUrl);
+  
+  // Persistiere Webhook-URL und Personalisierungsoptionen pro Gruppe
+  const [localWebhookUrl, setLocalWebhookUrl] = usePersistedForm(
+    `webhook-url-${group.scrape_job_id}`, 
+    webhookUrl
+  );
   const handlePersonalizationOptionsChange = (newOptions: PersonalizationOptions) => {
     onUpdateGroup({
       ...group,

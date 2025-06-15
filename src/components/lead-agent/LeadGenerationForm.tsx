@@ -7,7 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { SlidersHorizontal, Rocket, X, Copy, Check } from "lucide-react";
 import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
+import { usePersistedForm } from '@/hooks/usePersistedState';
 import { Badge } from '@/components/ui/badge';
+import { FormResetButton } from '@/components/ui/form-reset-button';
 
 // Vollständige Berufspakete basierend auf dem Prompt
 const jobPackages: Record<string, string[]> = {
@@ -93,16 +95,17 @@ export function LeadGenerationForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
-  const [locations, setLocations] = useState<string[]>([]);
-  const [currentLocation, setCurrentLocation] = useState('');
-  const [customTitles, setCustomTitles] = useState<string[]>([]);
-  const [currentCustomTitle, setCurrentCustomTitle] = useState('');
-  const [industries, setIndustries] = useState<string[]>([]);
-  const [currentIndustry, setCurrentIndustry] = useState('');
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  // Persistierte Form-States - überleben Browser-Wechsel, Seiten-Navigation, etc.
+  const [selectedPackages, setSelectedPackages] = usePersistedForm('leadgen-packages', [] as string[]);
+  const [locations, setLocations] = usePersistedForm('leadgen-locations', [] as string[]);
+  const [currentLocation, setCurrentLocation] = usePersistedForm('leadgen-current-location', '');
+  const [customTitles, setCustomTitles] = usePersistedForm('leadgen-custom-titles', [] as string[]);
+  const [currentCustomTitle, setCurrentCustomTitle] = usePersistedForm('leadgen-current-title', '');
+  const [industries, setIndustries] = usePersistedForm('leadgen-industries', [] as string[]);
+  const [currentIndustry, setCurrentIndustry] = usePersistedForm('leadgen-current-industry', '');
+  const [selectedSizes, setSelectedSizes] = usePersistedForm('leadgen-sizes', [] as string[]);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = usePersistedForm('leadgen-form-data', {
     keywords: '',
     leadCount: 500
   });
@@ -332,13 +335,25 @@ export function LeadGenerationForm() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5" />
-            Apollo.io Lead-Suche per Formular
-          </CardTitle>
-          <CardDescription>
-            Stelle deine Lead-Suche hier manuell zusammen - Alternative zum Chat-Bot.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5" />
+                Apollo.io Lead-Suche per Formular
+              </CardTitle>
+              <CardDescription>
+                Stelle deine Lead-Suche hier manuell zusammen - Alternative zum Chat-Bot.
+              </CardDescription>
+            </div>
+            <FormResetButton 
+              formKeys={[
+                'leadgen-packages', 'leadgen-locations', 'leadgen-current-location',
+                'leadgen-custom-titles', 'leadgen-current-title', 'leadgen-industries', 
+                'leadgen-current-industry', 'leadgen-sizes', 'leadgen-form-data'
+              ]}
+              className="shrink-0"
+            />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Schritt 1: Zielgruppe */}
