@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -49,23 +50,6 @@ export function SimplifiedLeadAgent() {
   const isEmbedChatAvailable = embedUrl;
   const isProperChatAvailable = isWidgetEnabled && widgetUrl;
   const isAnyChatConfigured = isEmbedChatAvailable || isProperChatAvailable;
-
-  // Ensure customizations have proper boolean types
-  // Create a new object with guaranteed boolean values
-  const normalizedCustomizations = {
-    autoOpen: customizations.autoOpen === true || 
-              customizations.autoOpen === 'true' ||
-              (customizations as any).autoOpen === true ||
-              (customizations as any).autoOpen === 'true',
-    showTypingIndicator: customizations.showTypingIndicator === true || 
-                         customizations.showTypingIndicator === 'true' ||
-                         (customizations as any).showTypingIndicator === true ||
-                         (customizations as any).showTypingIndicator === 'true',
-    allowFileUpload: customizations.allowFileUpload === true || 
-                     customizations.allowFileUpload === 'true' ||
-                     (customizations as any).allowFileUpload === true ||
-                     (customizations as any).allowFileUpload === 'true'
-  };
 
   if (!isAnyChatConfigured) {
     return (
@@ -156,20 +140,7 @@ export function SimplifiedLeadAgent() {
           {isProperChatAvailable && (chatMode === 'widget' || !isEmbedChatAvailable) ? (
             <N8nProperChatWidget
               webhookUrl={widgetUrl}
-              customizations={{
-                autoOpen: customizations.autoOpen === true || 
-                          customizations.autoOpen === 'true' ||
-                          (customizations as any).autoOpen === true ||
-                          (customizations as any).autoOpen === 'true',
-                showTypingIndicator: customizations.showTypingIndicator === true || 
-                                     customizations.showTypingIndicator === 'true' ||
-                                     (customizations as any).showTypingIndicator === true ||
-                                     (customizations as any).showTypingIndicator === 'true',
-                allowFileUpload: customizations.allowFileUpload === true || 
-                                 customizations.allowFileUpload === 'true' ||
-                                 (customizations as any).allowFileUpload === true ||
-                                 (customizations as any).allowFileUpload === 'true'
-              }}
+              customizations={customizations}
               onParametersGenerated={handleParametersGenerated}
               showDebug={false}
             />

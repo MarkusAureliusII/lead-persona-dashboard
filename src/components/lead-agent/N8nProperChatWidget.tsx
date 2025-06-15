@@ -10,6 +10,10 @@ interface N8nProperChatWidgetProps {
     theme: string;
     position: string;
     welcomeMessage: string;
+    language: string;
+    autoOpen: boolean;
+    showTypingIndicator: boolean;
+    allowFileUpload: boolean;
   };
   onParametersGenerated?: (parameters: any) => void;
   showDebug?: boolean;
@@ -262,6 +266,9 @@ export function N8nProperChatWidget({
               <div><strong>Theme:</strong> {customizations.theme}</div>
               <div><strong>Webhook:</strong> {webhookUrl}</div>
               <div><strong>Nachrichten:</strong> {messageCount}</div>
+              <div><strong>Auto Open:</strong> {customizations.autoOpen ? 'Ja' : 'Nein'}</div>
+              <div><strong>Typing Indicator:</strong> {customizations.showTypingIndicator ? 'Ja' : 'Nein'}</div>
+              <div><strong>File Upload:</strong> {customizations.allowFileUpload ? 'Ja' : 'Nein'}</div>
             </div>
           )}
         </div>
