@@ -4,26 +4,26 @@ import { N8nWebhookPayload, N8nResponse, SearchParameters } from './types';
 export class N8nFallbackService {
   static generateFallbackResponse(payload: N8nWebhookPayload): N8nResponse {
     console.log("🔄 Generating fallback response for payload:", payload);
-    
-    const fallbackParameters = this.extractParametersFromMessage(payload.message);
-    
+
+    const fallbackParameters = this.extractParametersFromMessage(payload.prompt);
+
     return {
       success: true,
       message: "Fallback response generated due to n8n workflow issues",
-      aiResponse: this.generateFallbackAiResponse(payload.message, fallbackParameters),
+      aiResponse: this.generateFallbackAiResponse(payload.prompt, fallbackParameters),
       searchParameters: fallbackParameters,
       responseType: 'fallback',
       debug: {
         requestId: payload.requestId || `fallback_${Date.now()}`,
         fallbackReason: 'n8n workflow error or timeout',
-        originalMessage: payload.message
+        originalMessage: payload.prompt
       }
     };
   }
 
   private static extractParametersFromMessage(message: string): SearchParameters {
     const lowerMessage = message.toLowerCase();
-    
+
     // Enhanced parameter extraction with better defaults
     let industry = "Technologie";
     let jobTitle = "Manager";

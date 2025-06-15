@@ -1,4 +1,3 @@
-
 import { N8nService } from '@/services/n8n';
 import { PersonalizationConfig } from '@/types/leadAgent';
 import { ProcessingResult } from '@/types/processing';
@@ -27,8 +26,8 @@ export class LeadProcessingService {
     
     const n8nService = new N8nService(webhookUrl);
     const requestPayload = {
-      message: `Please create a personalized outreach message for this lead using the following context:
-      
+      prompt: `Please create a personalized outreach message for this lead using the following context:
+
 Product/Service: ${personalizationConfig.productService}
 Desired Tone: ${personalizationConfig.tonality}
 
