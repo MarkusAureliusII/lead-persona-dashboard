@@ -9,13 +9,216 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      leads: {
+        Row: {
+          city: string | null
+          company_linkedin_url: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string | null
+          email: string | null
+          enriched_data: Json | null
+          facebook_url: string | null
+          first_name: string | null
+          id: string
+          keywords: string[] | null
+          last_name: string | null
+          person_linkedin_url: string | null
+          phone: string | null
+          raw_scraped_data: Json | null
+          scrape_job_id: string | null
+          source_id: string | null
+          state: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_linkedin_url?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          enriched_data?: Json | null
+          facebook_url?: string | null
+          first_name?: string | null
+          id?: string
+          keywords?: string[] | null
+          last_name?: string | null
+          person_linkedin_url?: string | null
+          phone?: string | null
+          raw_scraped_data?: Json | null
+          scrape_job_id?: string | null
+          source_id?: string | null
+          state?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_linkedin_url?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          enriched_data?: Json | null
+          facebook_url?: string | null
+          first_name?: string | null
+          id?: string
+          keywords?: string[] | null
+          last_name?: string | null
+          person_linkedin_url?: string | null
+          phone?: string | null
+          raw_scraped_data?: Json | null
+          scrape_job_id?: string | null
+          source_id?: string | null
+          state?: string | null
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_scrape_job_id_fkey"
+            columns: ["scrape_job_id"]
+            isOneToOne: false
+            referencedRelation: "scrape_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrape_jobs: {
+        Row: {
+          apify_run_id: string | null
+          finished_at: string | null
+          id: string
+          job_name: string | null
+          lead_count: number | null
+          started_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          apify_run_id?: string | null
+          finished_at?: string | null
+          id?: string
+          job_name?: string | null
+          lead_count?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          apify_run_id?: string | null
+          finished_at?: string | null
+          id?: string
+          job_name?: string | null
+          lead_count?: number | null
+          started_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
