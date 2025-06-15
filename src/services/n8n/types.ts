@@ -1,6 +1,7 @@
 
 export interface N8nWebhookPayload {
-  prompt: string;
+  prompt?: string; // Keep for backward compatibility
+  chatInput?: string; // New field for proper chat integration
   targetAudience: {
     industry: string;
     companySize: string;

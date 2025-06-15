@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { TargetAudience, SearchParameters } from "@/types/leadAgent";
 import { N8nService } from "@/services/n8n/N8nService";
@@ -66,7 +67,7 @@ export function useChatMessages({
     if (!webhookUrl) {
       toast({
         title: "⚠️ Konfiguration erforderlich",
-        description: "Bitte konfigurieren Sie die n8n Embed URL.",
+        description: "Bitte konfigurieren Sie die n8n Chat URL.",
         variant: "destructive",
       });
       return;
@@ -119,7 +120,7 @@ export function useChatMessages({
     try {
       const n8nService = new N8nService(webhookUrl, { timeout: 15000 });
       const response = await n8nService.sendMessage({
-        prompt: inputValue, // <-- SEND AS 'prompt' instead of 'message'
+        chatInput: inputValue, // <-- SEND AS 'chatInput' instead of 'prompt' for proper n8n chat integration
         targetAudience,
         timestamp: new Date().toISOString(),
       });
@@ -288,6 +289,3 @@ export function useChatMessages({
     mode
   };
 }
-
-// This file is now over 200 lines and keeping all logic unified.
-// You should consider splitting embed/webhook logic into smaller files for better maintainability!

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Settings, Bot, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LeadAgentChat } from "./LeadAgentChat";
-import { N8nChatWidget } from "./N8nChatWidget";
+import { N8nProperChatWidget } from "./N8nProperChatWidget";
 import { ChatSelector } from "./ChatSelector";
 import { ApolloSearchPreview } from "./ApolloSearchPreview";
 import { TargetAudience, SearchParameters, ChatMode } from "@/types/leadAgent";
 import { useEmbedConfig } from "@/hooks/useEmbedConfig";
-import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
+import { useN8nEnhancedWidgetConfig } from "@/hooks/useN8nEnhancedWidgetConfig";
 
 export function SimplifiedLeadAgent() {
   const { embedUrl } = useEmbedConfig();
@@ -19,7 +19,7 @@ export function SimplifiedLeadAgent() {
     isWidgetEnabled,
     widgetUrl,
     customizations
-  } = useN8nWidgetConfig();
+  } = useN8nEnhancedWidgetConfig();
 
   const [chatMode, setChatMode] = useState<ChatMode>('custom');
   const [searchParameters, setSearchParameters] = useState<SearchParameters>({
@@ -38,6 +38,7 @@ export function SimplifiedLeadAgent() {
   });
 
   const handleParametersGenerated = (parameters: SearchParameters) => {
+    console.log("🎯🐱 Parameters generated in SimplifiedLeadAgent:", parameters);
     setSearchParameters(parameters);
   };
 
@@ -45,17 +46,19 @@ export function SimplifiedLeadAgent() {
     setSearchParameters(parameters);
   };
 
-  // Check if basic configuration is available
-  const isBasicConfigAvailable = embedUrl || (isWidgetEnabled && widgetUrl);
+  // Check if any chat configuration is available
+  const isEmbedChatAvailable = embedUrl;
+  const isProperChatAvailable = isWidgetEnabled && widgetUrl;
+  const isAnyChatConfigured = isEmbedChatAvailable || isProperChatAvailable;
 
-  if (!isBasicConfigAvailable) {
+  if (!isAnyChatConfigured) {
     return (
       <div className="space-y-6">
         <Alert>
           <Settings className="h-4 w-4" />
           <AlertDescription>
             <div className="flex items-center justify-between">
-              <span>Bitte konfigurieren Sie zunächst Ihre n8n Embed Chat URL in den Einstellungen.</span>
+              <span>Bitte konfigurieren Sie zunächst eine n8n Chat-Integration in den Einstellungen.</span>
               <Link to="/settings">
                 <Button variant="outline" size="sm">
                   Zu den Einstellungen
@@ -65,22 +68,41 @@ export function SimplifiedLeadAgent() {
           </AlertDescription>
         </Alert>
         
-        <Card className="p-6">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Bot className="w-8 h-8 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bot className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">🐱 Embed Chat System</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Verwenden Sie eingebettete Chat-Widgets für bessere Performance.
+              </p>
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>✅ Direkte Chat-Integration ohne Webhook-Aufrufe</p>
+                <p>✅ Bessere Echtzeitkommunikation</p>
+                <p>✅ Iframe-basierte Lösung</p>
+              </div>
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">🐱 Embed Chat System</h3>
-            <p className="text-gray-600 text-sm mb-4">
-              Das System verwendet jetzt eingebettete Chat-Widgets für bessere Performance und Integration.
-            </p>
-            <div className="text-xs text-gray-500 space-y-1">
-              <p>✅ Direkte Chat-Integration ohne Webhook-Aufrufe</p>
-              <p>✅ Bessere Echtzeitkkommunikation</p>
-              <p>✅ Optimierte Katzen-Power für Lead-Generierung</p>
+          </Card>
+
+          <Card className="p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">🐱 Proper Chat Widget</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Verwenden Sie das offizielle @n8n/chat Package für optimale Integration.
+              </p>
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>✅ createChat() API Integration</p>
+                <p>✅ Erweiterte Anpassungsmöglichkeiten</p>
+                <p>✅ Optimierte Katzen-Power für Lead-Generierung</p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -91,7 +113,7 @@ export function SimplifiedLeadAgent() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">🐱 Lead Agent</h1>
           <p className="text-gray-600">
-            Vollständiger AI-gestützter Lead-Generierungs-Assistent mit eingebettetem Chat und Katzen-Power
+            AI-gestützter Lead-Generierungs-Assistent mit enhanced n8n Chat Integration
           </p>
         </div>
         <Link to="/settings">
@@ -105,25 +127,28 @@ export function SimplifiedLeadAgent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chat Section */}
         <div className="space-y-4">
-          {/* Chat Mode Selection */}
-          <ChatSelector
-            chatMode={chatMode}
-            onChatModeChange={setChatMode}
-            isWidgetConfigured={isWidgetEnabled && !!widgetUrl}
-          />
+          {/* Chat Mode Selection - Only show if both options are available */}
+          {isEmbedChatAvailable && isProperChatAvailable && (
+            <ChatSelector
+              chatMode={chatMode}
+              onChatModeChange={setChatMode}
+              isWidgetConfigured={isProperChatAvailable}
+            />
+          )}
 
           {/* Conditional Chat Rendering */}
-          {chatMode === 'custom' ? (
+          {isProperChatAvailable && (chatMode === 'widget' || !isEmbedChatAvailable) ? (
+            <N8nProperChatWidget
+              webhookUrl={widgetUrl}
+              customizations={customizations}
+              onParametersGenerated={handleParametersGenerated}
+              showDebug={true}
+            />
+          ) : isEmbedChatAvailable && (
             <LeadAgentChat
               onParametersGenerated={handleParametersGenerated}
               targetAudience={targetAudience}
               embedUrl={embedUrl}
-            />
-          ) : (
-            <N8nChatWidget
-              widgetUrl={widgetUrl}
-              customizations={customizations}
-              onParametersGenerated={handleParametersGenerated}
             />
           )}
         </div>

@@ -5,18 +5,21 @@ export class N8nFallbackService {
   static generateFallbackResponse(payload: N8nWebhookPayload): N8nResponse {
     console.log("🔄 Generating fallback response for payload:", payload);
 
-    const fallbackParameters = this.extractParametersFromMessage(payload.prompt);
+    // Use chatInput first, fallback to prompt for backward compatibility
+    const messageContent = payload.chatInput || payload.prompt || '';
+    const fallbackParameters = this.extractParametersFromMessage(messageContent);
 
     return {
       success: true,
       message: "Fallback response generated due to n8n workflow issues",
-      aiResponse: this.generateFallbackAiResponse(payload.prompt, fallbackParameters),
+      aiResponse: this.generateFallbackAiResponse(messageContent, fallbackParameters),
       searchParameters: fallbackParameters,
       responseType: 'fallback',
       debug: {
         requestId: payload.requestId || `fallback_${Date.now()}`,
         fallbackReason: 'n8n workflow error or timeout',
-        originalMessage: payload.prompt
+        originalMessage: messageContent,
+        usedField: payload.chatInput ? 'chatInput' : 'prompt'
       }
     };
   }
