@@ -120,7 +120,8 @@ function LeadCard({
   };
 
   const getWebsite = () => {
-    const website = lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url;
+    // Zuerst aus der Haupttabelle, dann aus raw_scraped_data
+    const website = lead.website || lead.raw_scraped_data?.website || lead.raw_scraped_data?.companyWebsite || lead.raw_scraped_data?.url;
     if (website && !website.startsWith('http')) {
       return `https://${website}`;
     }
@@ -242,9 +243,6 @@ function LeadCard({
                   <div className="flex items-center gap-2">
                     <Building size={14} className="text-gray-600" />
                     <span className="text-sm font-medium">Firmendaten</span>
-                    {getCompany() && (
-                      <span className="text-sm text-muted-foreground">({getCompany()})</span>
-                    )}
                   </div>
                   {showCompanyDetails ? (
                     <ChevronDown size={14} />
