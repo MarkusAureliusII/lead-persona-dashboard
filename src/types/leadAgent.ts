@@ -1,4 +1,3 @@
-
 export interface PersonalizationConfig {
   productService: string;
   tonality: string;
@@ -56,3 +55,15 @@ export const SUPPORTED_LANGUAGES: SupportedLanguage[] = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'ar', name: 'العربية', flag: '🇦🇪' }
 ];
+
+export interface N8nWidgetConfig {
+  enabled: boolean;
+  widgetUrl: string;
+  customizations: {
+    theme: 'light' | 'dark' | 'auto';
+    position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+    welcomeMessage: string;
+  };
+}
+
+export type ChatMode = 'custom' | 'widget';

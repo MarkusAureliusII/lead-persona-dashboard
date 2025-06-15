@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -5,24 +6,37 @@ import { useState } from "react";
 import { CsvUploadForm } from "@/components/lead-agent/CsvUploadForm";
 import { PersonalizationForm } from "@/components/lead-agent/PersonalizationForm";
 import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
+import { N8nChatWidgetConfig } from "@/components/lead-agent/N8nChatWidgetConfig";
+import { ChatSelector } from "@/components/lead-agent/ChatSelector";
 import { ProcessControls } from "@/components/lead-agent/ProcessControls";
 import { ProcessingDashboard } from "@/components/lead-agent/ProcessingDashboard";
-import { PersonalizationConfig } from "@/types/leadAgent";
+import { LeadAgentChat } from "@/components/lead-agent/LeadAgentChat";
+import { N8nChatWidget } from "@/components/lead-agent/N8nChatWidget";
+import { PersonalizationConfig, TargetAudience, SearchParameters } from "@/types/leadAgent";
 import { useCsvUpload } from "@/hooks/useCsvUpload";
 import { useLeadProcessing } from "@/hooks/useLeadProcessing";
 import { useCsvData } from "@/hooks/useCsvData";
 import { useWebhookConfig } from "@/hooks/useWebhookConfig";
+import { useN8nWidgetConfig } from "@/hooks/useN8nWidgetConfig";
 
 const LeadAgent = () => {
   const { savePersonalizationConfig } = useCsvUpload();
   const { isProcessing, processingResults, startProcessing } = useLeadProcessing();
   const { csvFile, setCsvFile, csvData, setCsvData, csvUploadId, handleCsvDataProcessed } = useCsvData();
   const { webhookUrl, handleWebhookUrlChange } = useWebhookConfig();
+  const {
+    isWidgetEnabled,
+    widgetUrl,
+    customizations,
+    handleWidgetEnabledChange,
+    handleWidgetUrlChange,
+    handleCustomizationsChange
+  } = useN8nWidgetConfig();
   
   const [personalizationConfig, setPersonalizationConfig] = useState<PersonalizationConfig>({
     productService: "",
     tonality: "Professional",
-    language: "en", // Default to English
+    language: "en",
     upsellOptions: {
       emailVerification: false
     },
@@ -33,6 +47,18 @@ const LeadAgent = () => {
     }
   });
 
+  const [chatMode, setChatMode] = useState<'custom' | 'widget'>('custom');
+  const [searchParameters, setSearchParameters] = useState<SearchParameters>({});
+  
+  // Target audience for the chat
+  const targetAudience: TargetAudience = {
+    industry: searchParameters.industry || "",
+    companySize: searchParameters.companySize || "",
+    jobTitle: searchParameters.jobTitle || "",
+    location: searchParameters.location || "",
+    techStack: searchParameters.techStack
+  };
+
   const handleStartProcessing = async () => {
     await startProcessing(
       csvData,
@@ -42,6 +68,12 @@ const LeadAgent = () => {
       savePersonalizationConfig
     );
   };
+
+  const handleParametersGenerated = (parameters: SearchParameters) => {
+    setSearchParameters(parameters);
+  };
+
+  const isWidgetConfigured = isWidgetEnabled && widgetUrl.trim() !== '';
 
   return (
     <SidebarProvider>
@@ -74,17 +106,46 @@ const LeadAgent = () => {
                     webhookUrl={webhookUrl}
                     onWebhookUrlChange={handleWebhookUrlChange}
                   />
+                  <N8nChatWidgetConfig
+                    widgetUrl={widgetUrl}
+                    onWidgetUrlChange={handleWidgetUrlChange}
+                    isEnabled={isWidgetEnabled}
+                    onEnabledChange={handleWidgetEnabledChange}
+                    customizations={customizations}
+                    onCustomizationsChange={handleCustomizationsChange}
+                  />
                 </div>
 
-                {/* Right Column - Controls and Dashboard */}
+                {/* Right Column - Controls, Chat and Dashboard */}
                 <div className="space-y-8">
-                   <ProcessControls
+                  <ProcessControls
                     csvFile={csvFile}
                     webhookUrl={webhookUrl}
                     personalizationConfig={personalizationConfig}
                     isProcessing={isProcessing}
                     onStartProcessing={handleStartProcessing}
                   />
+                  
+                  <ChatSelector
+                    chatMode={chatMode}
+                    onChatModeChange={setChatMode}
+                    isWidgetConfigured={isWidgetConfigured}
+                  />
+
+                  {chatMode === 'custom' ? (
+                    <LeadAgentChat
+                      onParametersGenerated={handleParametersGenerated}
+                      targetAudience={targetAudience}
+                      webhookUrl={webhookUrl}
+                    />
+                  ) : (
+                    <N8nChatWidget
+                      widgetUrl={widgetUrl}
+                      customizations={customizations}
+                      onParametersGenerated={handleParametersGenerated}
+                    />
+                  )}
+
                   <ProcessingDashboard
                     csvData={csvData}
                     processingResults={processingResults}
