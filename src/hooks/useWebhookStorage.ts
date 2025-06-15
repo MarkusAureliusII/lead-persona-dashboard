@@ -89,6 +89,9 @@ export function useWebhookStorage() {
 
       const updatedSettings = { ...webhookSettings, ...settings };
       
+      console.log('Saving webhook settings for user:', user.id);
+      console.log('Settings to save:', updatedSettings);
+      
       const { data, error } = await supabase
         .from('webhook_settings')
         .upsert({
@@ -104,8 +107,11 @@ export function useWebhookStorage() {
         .single();
 
       if (error) {
+        console.error('Supabase error:', error);
         throw error;
       }
+
+      console.log('Successfully saved webhook settings:', data);
 
       setWebhookSettings({
         ...updatedSettings,
@@ -121,9 +127,22 @@ export function useWebhookStorage() {
       return true;
     } catch (error) {
       console.error('Error saving webhook settings:', error);
+      
+      let errorMessage = "Webhook-Einstellungen konnten nicht gespeichert werden.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('relation "webhook_settings" does not exist')) {
+          errorMessage = "Datenbanktabelle wurde noch nicht erstellt. Bitte führe die SQL-Migration aus.";
+        } else if (error.message.includes('permission denied')) {
+          errorMessage = "Keine Berechtigung. Prüfe die RLS-Policies.";
+        } else {
+          errorMessage = `Datenbankfehler: ${error.message}`;
+        }
+      }
+      
       toast({
         title: "Fehler beim Speichern",
-        description: "Webhook-Einstellungen konnten nicht gespeichert werden.",
+        description: errorMessage,
         variant: "destructive"
       });
       return false;

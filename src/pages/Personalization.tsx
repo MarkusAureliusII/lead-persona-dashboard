@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from '@/lib/supabase';
-import { useWebhookStorage } from '@/hooks/useWebhookStorage';
+import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { 
   Loader2, 
   Users, 
@@ -810,7 +810,7 @@ const Personalization = () => {
     autoSave, 
     isLoading: isLoadingWebhooks,
     isSaving: isSavingWebhooks 
-  } = useWebhookStorage();
+  } = useWebhookStorageLocal();
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {

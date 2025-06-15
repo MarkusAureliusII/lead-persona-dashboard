@@ -11,7 +11,7 @@ import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { N8nChatSettings } from "@/components/settings/N8nChatSettings";
 import { LeadProcessingSettings } from "@/components/settings/LeadProcessingSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
-import { WebhookSettings } from "@/components/settings/WebhookSettings";
+import { WebhookSettingsImproved } from "@/components/settings/WebhookSettingsImproved";
 
 const Settings = () => {
   return (
@@ -40,7 +40,7 @@ const Settings = () => {
                 </TabsContent>
 
                 <TabsContent value="webhooks">
-                  <WebhookSettings />
+                  <WebhookSettingsImproved />
                 </TabsContent>
 
                 <TabsContent value="integrations">

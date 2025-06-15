@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Save, Check, AlertCircle, Webhook } from "lucide-react";
-import { useWebhookStorage } from '@/hooks/useWebhookStorage';
+import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { useState } from 'react';
 
 export function WebhookSettings() {
@@ -14,7 +14,7 @@ export function WebhookSettings() {
     autoSave, 
     isLoading, 
     isSaving 
-  } = useWebhookStorage();
+  } = useWebhookStorageLocal();
   
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -68,6 +68,21 @@ export function WebhookSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Migration Notice */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-yellow-600" />
+          <h3 className="font-medium text-yellow-800">Lokale Speicherung</h3>
+        </div>
+        <p className="text-sm text-yellow-700 mt-1">
+          Die Webhook-Einstellungen werden derzeit lokal im Browser gespeichert. 
+          Für persistente Speicherung führe die SQL-Migration in Supabase aus:
+        </p>
+        <code className="block bg-yellow-100 text-yellow-800 p-2 rounded mt-2 text-xs">
+          supabase_webhook_settings_table.sql
+        </code>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">N8N Webhook-Einstellungen</h2>
