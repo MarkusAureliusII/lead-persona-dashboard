@@ -3,7 +3,7 @@ import { useState } from "react";
 import { TargetAudience, SearchParameters } from "@/types/leadAgent";
 import { N8nService } from "@/services/n8nService";
 import { useToast } from "@/hooks/use-toast";
-import { ChatMessage } from "./ChatMessage";
+import type { ChatMessage } from "./ChatMessage";
 
 interface UseChatMessagesProps {
   webhookUrl?: string;
@@ -23,7 +23,7 @@ export function useChatMessages({
       id: "1",
       type: "agent",
       content: webhookUrl 
-        ? "🤖 Hallo! Ich bin Ihr n8n-powered Lead Agent. Beschreiben Sie mir in natürlicher Sprache, welche Art von Leads Sie suchen.\n\n💡 **Beispiele:**\n• 'Suche CTOs von SaaS Unternehmen in Deutschland'\n• 'Finde Marketing Manager in Startups mit 10-50 Mitarbeitern'\n• 'Zeige mir HR Directors in Fintech Unternehmen in Berlin'"
+        ? "🐱 **Miau! Willkommen beim Lead-Jagd-Assistenten!**\n\nIch bin Ihr schnurrfähiger n8n-powered Lead Agent mit Extra-Signal-Rausch-Filterung für bessere Konversionen! 🎯\n\nBeschreiben Sie mir in natürlicher Sprache, welche Art von Leads Sie jagen möchten:\n\n💡 **Katzen-getestete Beispiele:**\n• 'Suche CTOs von SaaS Unternehmen in Deutschland'\n• 'Finde Marketing Manager in Startups mit 10-50 Mitarbeitern'\n• 'Zeige mir HR Directors in Fintech Unternehmen in Berlin'\n\n🔥 **Signal-Rausch-Optimierung aktiviert für bessere Lead-Qualität!**"
         : "⚠️ **n8n Webhook nicht konfiguriert**\n\nBitte konfigurieren Sie zunächst Ihre n8n Webhook URL in den Einstellungen oberhalb, um den AI Agent zu verwenden.",
       timestamp: new Date()
     }
@@ -110,11 +110,11 @@ export function useChatMessages({
       console.log("🔄 Processing n8n response:", response);
 
       if (response.success && response.aiResponse) {
-        // Display the AI agent response
+        // Display the AI agent response with cat enhancement
         const agentMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           type: "agent",
-          content: response.aiResponse,
+          content: `🐱 **Schnurr!** ${response.aiResponse}\n\n🔊 **Signal-Rausch-Filter aktiviert für optimale Lead-Qualität!**`,
           timestamp: new Date(),
           parameters: response.searchParameters,
           debug: response.debug
@@ -141,7 +141,7 @@ export function useChatMessages({
           const parameterMessage: ChatMessage = {
             id: (Date.now() + 3).toString(),
             type: "agent",
-            content: `🎯 **Suchparameter automatisch generiert:**
+            content: `🎯 **Katzen-optimierte Suchparameter generiert:**
 
 **Branche:** ${response.searchParameters.industry || 'Nicht spezifiziert'}
 **Position:** ${response.searchParameters.jobTitle || 'Nicht spezifiziert'}
@@ -149,7 +149,7 @@ export function useChatMessages({
 **Firmengröße:** ${response.searchParameters.companySize || 'Nicht spezifiziert'}
 **Geschätzte Leads:** ~${response.searchParameters.estimatedLeads || 'Unbekannt'}
 
-✅ Die Parameter wurden automatisch in die Vorschau übernommen.`,
+🐱✅ Die Parameter wurden mit Katzen-Präzision in die Vorschau übernommen!`,
             timestamp: new Date(),
             parameters: response.searchParameters
           };
@@ -165,9 +165,9 @@ export function useChatMessages({
           const fallbackMessage: ChatMessage = {
             id: (Date.now() + 4).toString(),
             type: "agent",
-            content: `⚡ **Fallback-Parameter generiert:**
+            content: `⚡🐱 **Katzen-Fallback-Parameter mit Signal-Rausch-Optimierung:**
 
-Da keine strukturierten Parameter vom AI Agent empfangen wurden, habe ich basierend auf Ihrer Anfrage folgende Parameter erstellt:
+Da keine strukturierten Parameter vom AI Agent empfangen wurden, habe ich mit meinen Katzen-Instinkten folgende Parameter erstellt:
 
 **Branche:** ${fallbackParams.industry}
 **Position:** ${fallbackParams.jobTitle}
@@ -175,7 +175,7 @@ Da keine strukturierten Parameter vom AI Agent empfangen wurden, habe ich basier
 **Firmengröße:** ${fallbackParams.companySize}
 **Geschätzte Leads:** ~${fallbackParams.estimatedLeads}
 
-💡 *Tipp: Optimieren Sie Ihren n8n Workflow, um strukturierte Parameter zurückzugeben.*`,
+💡 *Schnurr-Tipp: Optimieren Sie Ihren n8n Workflow für noch bessere Katzen-Power!*`,
             timestamp: new Date(),
             parameters: fallbackParams
           };
@@ -185,20 +185,21 @@ Da keine strukturierten Parameter vom AI Agent empfangen wurden, habe ich basier
           }, 1000);
         }
       } else {
-        // Enhanced error handling
+        // Enhanced error handling with cat theme
         const errorMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
           type: "error",
-          content: `❌ **Fehler beim Verarbeiten der Anfrage:**
+          content: `❌🐱 **Katzen-Alarm! Fehler beim Verarbeiten:**
 
 ${response.message}
 
 ${response.error ? `**Technische Details:** ${response.error}` : ''}
 
-🔧 **Lösungsvorschläge:**
+🔧 **Katzen-Lösungsvorschläge:**
 • Überprüfen Sie Ihre n8n Webhook URL
 • Stellen Sie sicher, dass Ihr n8n Workflow läuft
-• Prüfen Sie die n8n Workflow-Logs auf Fehler`,
+• Prüfen Sie die n8n Workflow-Logs auf Fehler
+• Füttern Sie die Server-Katze 🐱`,
           timestamp: new Date(),
           debug: response.debug
         };
@@ -211,14 +212,14 @@ ${response.error ? `**Technische Details:** ${response.error}` : ''}
       const criticalErrorMessage: ChatMessage = {
         id: (Date.now() + 5).toString(),
         type: "error",
-        content: `💥 **Kritischer Fehler:**
+        content: `💥🐱 **Kritischer Katzen-Notfall:**
 
 Es ist ein unerwarteter Fehler aufgetreten: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}
 
-🔧 **Sofortige Hilfe:**
+🔧 **Sofortige Katzen-Hilfe:**
 • Überprüfen Sie Ihre Internetverbindung
 • Validieren Sie die n8n Webhook URL
-• Kontaktieren Sie den Support, falls das Problem weiterhin besteht`,
+• Kontaktieren Sie den Support (mit Katzenbildern für schnellere Hilfe)`,
         timestamp: new Date()
       };
 

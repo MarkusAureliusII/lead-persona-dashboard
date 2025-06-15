@@ -2,7 +2,7 @@
 import { Bot } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { SearchParameters } from "@/types/leadAgent";
-import { ChatMessage as ChatMessageType } from "./ChatMessage";
+import type { ChatMessage as ChatMessageType } from "./ChatMessage";
 
 interface ChatMessageListProps {
   messages: ChatMessageType[];

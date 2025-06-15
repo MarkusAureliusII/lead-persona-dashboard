@@ -2,7 +2,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CsvUploadForm } from "@/components/lead-agent/CsvUploadForm";
 import { PersonalizationForm } from "@/components/lead-agent/PersonalizationForm";
 import { N8nConfiguration } from "@/components/lead-agent/N8nConfiguration";
@@ -47,8 +47,26 @@ const LeadAgent = () => {
     }
   });
 
-  const [chatMode, setChatMode] = useState<'custom' | 'widget'>('custom');
+  const [chatMode, setChatMode] = useState<'custom' | 'widget'>('widget');
   const [searchParameters, setSearchParameters] = useState<SearchParameters>({});
+  
+  // Auto-configure the webhook URL on component mount
+  useEffect(() => {
+    const autoWebhookUrl = "https://n8n-selfhost-u40339.vm.elestio.app/webhook/fa996958-1ecc-4644-bb93-34f060a170a3/chat";
+    if (!webhookUrl) {
+      handleWebhookUrlChange(autoWebhookUrl);
+    }
+    
+    // Auto-configure widget URL and enable it
+    if (!widgetUrl) {
+      handleWidgetUrlChange(autoWebhookUrl);
+      handleWidgetEnabledChange(true);
+      handleCustomizationsChange({
+        ...customizations,
+        welcomeMessage: '🐱 Miau! Ich bin Ihr Lead-Jagd-Assistent mit Signal-Rausch-Optimierung! Wie kann ich Ihnen bei der Lead-Suche helfen?'
+      });
+    }
+  }, []);
   
   // Target audience for the chat
   const targetAudience: TargetAudience = {
@@ -84,9 +102,9 @@ const LeadAgent = () => {
           <main className="flex-1 p-6">
             <div className="container mx-auto max-w-7xl">
               <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">CSV Lead Personalization</h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">🐱 CSV Lead Personalization mit Katzen-Power</h1>
                 <p className="text-gray-600">
-                  Upload a CSV file with your leads, configure the personalization, and let our AI do the work via your n8n webhook.
+                  Upload a CSV file with your leads, configure the personalization, and let our cat-powered AI do the work via your n8n webhook with signal-noise optimization! 🎯
                 </p>
               </div>
 

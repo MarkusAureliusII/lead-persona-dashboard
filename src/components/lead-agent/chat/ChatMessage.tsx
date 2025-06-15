@@ -3,7 +3,7 @@ import { Bot, User, AlertCircle, Bug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SearchParameters } from "@/types/leadAgent";
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   type: "user" | "agent" | "error" | "debug";
   content: string;
@@ -85,5 +85,3 @@ export function ChatMessage({ message, onParametersReuse }: ChatMessageProps) {
     </div>
   );
 }
-
-export type { ChatMessage };
