@@ -142,6 +142,7 @@ export function SimplifiedLeadAgent() {
               webhookUrl={widgetUrl}
               customizations={customizations}
               onParametersGenerated={handleParametersGenerated}
+              showDebug={false}
             />
           ) : isEmbedChatAvailable && (
             <LeadAgentChat
