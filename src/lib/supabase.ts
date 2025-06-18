@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Self-hosted Supabase configuration - Direct service connections (no Kong)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://217.154.225.184:3003'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpLXN0YWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODQ4NjAyMDAsImV4cCI6MTg0MjY0NjYwMH0.LmAmqbkr_V-ZgPl4UQJf9z2Y2J9vF3nHdY1kF4M-8Wy'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpLXN0YWNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODU0MTcsImV4cCI6MjA2NTY0NTQxN30.SBgYMBVRxb7IIyKd2vLGsJ3Up8TLoGgq4YCqrPoYvvQ'
 
 // Direct Supabase services configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
