@@ -11,20 +11,32 @@ export type Database = {
     Tables: {
       leads: {
         Row: {
+          actor_run_id: string | null
+          analysis_text_company_linkedin: string | null
+          analysis_text_personal_linkedin: string | null
+          analysis_text_website: string | null
           city: string | null
           company_linkedin_url: string | null
           company_name: string | null
           country: string | null
           created_at: string | null
           email: string | null
+          email_verification_status: string | null
           enriched_data: Json | null
           facebook_url: string | null
           first_name: string | null
           id: string
+          is_company_linkedin_analyzed: boolean | null
+          is_custom_field_1_analyzed: boolean | null
+          is_email_verification_processed: boolean | null
+          is_email_verified: boolean | null
+          is_personal_linkedin_analyzed: boolean | null
+          is_website_analyzed: boolean | null
           keywords: string[] | null
           last_name: string | null
           person_linkedin_url: string | null
           phone: string | null
+          phone_number: string | null
           raw_scraped_data: Json | null
           scrape_job_id: string | null
           source_id: string | null
@@ -35,20 +47,32 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          actor_run_id?: string | null
+          analysis_text_company_linkedin?: string | null
+          analysis_text_personal_linkedin?: string | null
+          analysis_text_website?: string | null
           city?: string | null
           company_linkedin_url?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string | null
           email?: string | null
+          email_verification_status?: string | null
           enriched_data?: Json | null
           facebook_url?: string | null
           first_name?: string | null
           id?: string
+          is_company_linkedin_analyzed?: boolean | null
+          is_custom_field_1_analyzed?: boolean | null
+          is_email_verification_processed?: boolean | null
+          is_email_verified?: boolean | null
+          is_personal_linkedin_analyzed?: boolean | null
+          is_website_analyzed?: boolean | null
           keywords?: string[] | null
           last_name?: string | null
           person_linkedin_url?: string | null
           phone?: string | null
+          phone_number?: string | null
           raw_scraped_data?: Json | null
           scrape_job_id?: string | null
           source_id?: string | null
@@ -59,20 +83,32 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          actor_run_id?: string | null
+          analysis_text_company_linkedin?: string | null
+          analysis_text_personal_linkedin?: string | null
+          analysis_text_website?: string | null
           city?: string | null
           company_linkedin_url?: string | null
           company_name?: string | null
           country?: string | null
           created_at?: string | null
           email?: string | null
+          email_verification_status?: string | null
           enriched_data?: Json | null
           facebook_url?: string | null
           first_name?: string | null
           id?: string
+          is_company_linkedin_analyzed?: boolean | null
+          is_custom_field_1_analyzed?: boolean | null
+          is_email_verification_processed?: boolean | null
+          is_email_verified?: boolean | null
+          is_personal_linkedin_analyzed?: boolean | null
+          is_website_analyzed?: boolean | null
           keywords?: string[] | null
           last_name?: string | null
           person_linkedin_url?: string | null
           phone?: string | null
+          phone_number?: string | null
           raw_scraped_data?: Json | null
           scrape_job_id?: string | null
           source_id?: string | null
@@ -122,103 +158,54 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_settings: {
+        Row: {
+          ai_chat_webhook: string | null
+          created_at: string | null
+          email_verification_webhook: string | null
+          global_webhook_url: string | null
+          id: string
+          lead_processing_webhook: string | null
+          lead_scraping_webhook: string | null
+          linkedin_analysis_webhook: string | null
+          updated_at: string | null
+          user_id: string
+          website_analysis_webhook: string | null
+        }
+        Insert: {
+          ai_chat_webhook?: string | null
+          created_at?: string | null
+          email_verification_webhook?: string | null
+          global_webhook_url?: string | null
+          id?: string
+          lead_processing_webhook?: string | null
+          lead_scraping_webhook?: string | null
+          linkedin_analysis_webhook?: string | null
+          updated_at?: string | null
+          user_id: string
+          website_analysis_webhook?: string | null
+        }
+        Update: {
+          ai_chat_webhook?: string | null
+          created_at?: string | null
+          email_verification_webhook?: string | null
+          global_webhook_url?: string | null
+          id?: string
+          lead_processing_webhook?: string | null
+          lead_scraping_webhook?: string | null
+          linkedin_analysis_webhook?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website_analysis_webhook?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
