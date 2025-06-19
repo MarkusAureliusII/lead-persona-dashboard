@@ -13,7 +13,6 @@ import { supabase } from '@/lib/supabase';
 import { useWebhookStorageLocal } from '@/hooks/useWebhookStorageLocal';
 import { usePersistedForm } from '@/hooks/usePersistedState';
 
-
 import { Loader2, Users, MailCheck, Globe, Building, Wand2, RefreshCw, ChevronDown, ChevronRight, Calendar, FolderOpen, FolderClosed, Phone, MapPin, ExternalLink, Linkedin, Play, Trash2, Filter, X, Link, Clock, Hourglass, Zap, CheckCircle2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
@@ -701,16 +700,9 @@ const Personalization = () => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
-  const {
-    webhookSettings,
-    updateWebhookUrl,
-    autoSave,
-    isLoading: isLoadingWebhooks,
-    isSaving: isSavingWebhooks
-  } = useWebhookStorageLocal();
+  const { toast } = useToast();
+  const { webhookSettings } = useWebhookStorageLocal();
+
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
       const newSet = new Set(prev);
@@ -722,36 +714,40 @@ const Personalization = () => {
       return newSet;
     });
   };
+
   const updateGroup = (updatedGroup: LeadGroup) => {
-    setLeadGroups(prev => prev.map(group => group.scrape_job_id === updatedGroup.scrape_job_id ? updatedGroup : group));
+    setLeadGroups(prev => prev.map(group => 
+      group.scrape_job_id === updatedGroup.scrape_job_id ? updatedGroup : group
+    ));
   };
+
   const expandAllGroups = () => {
     setExpandedGroups(new Set(leadGroups.map(g => g.scrape_job_id || 'unknown')));
   };
+
   const collapseAllGroups = () => {
     setExpandedGroups(new Set());
   };
+
   const fetchLeads = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    
     try {
       console.log('📊 Fetching all leads from database...');
 
-      // Nur neue Leads laden (status = 'new')
-      const {
-        data,
-        error
-      } = await supabase.from('leads').select(`
+      const { data, error } = await supabase
+        .from('leads')
+        .select(`
           *,
           scrape_jobs (
             job_name,
             started_at
           )
         `)
-      // Alle Leads ohne Status-Filter (da Status-Spalte entfernt wurde)
-      .order('created_at', {
-        ascending: false
-      }).limit(200);
+        .order('created_at', { ascending: false })
+        .limit(200);
+
       if (error) {
         console.error("❌ Database error:", error);
         setErrorMessage(`Datenbankfehler: ${error.message}`);
@@ -762,12 +758,14 @@ const Personalization = () => {
         });
         return;
       }
+
       if (!data || data.length === 0) {
-        console.log('⚠️ No new leads found');
-        setErrorMessage('Keine neuen Leads gefunden');
+        console.log('⚠️ No leads found');
+        setErrorMessage('Keine Leads gefunden');
         setLeadGroups([]);
         return;
       }
+
       console.log(`✅ ${data.length} leads loaded successfully`);
 
       // Leads nach scrape_job_id gruppieren
@@ -792,14 +790,16 @@ const Personalization = () => {
         } else if (firstLead.source_id) {
           jobName = `Scrape-Job ${firstLead.source_id}`;
         } else {
-          // Datum als Fallback
           const date = new Date(firstLead.created_at);
           jobName = `Scrape-Job vom ${date.toLocaleDateString('de-DE')}`;
         }
 
         // Datum für Sortierung
         const date = jobInfo?.started_at || firstLead.created_at;
-        const sortedLeads = leads.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const sortedLeads = leads.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
         return {
           scrape_job_id: jobId,
           scrape_job_name: jobName,
@@ -812,7 +812,6 @@ const Personalization = () => {
           }),
           leads: sortedLeads,
           filteredLeads: sortedLeads,
-          // Initial: alle Leads
           totalLeads: leads.length,
           withEmail: leads.filter(l => l.email || l.raw_scraped_data?.email).length,
           personalizationOptions: {
@@ -825,14 +824,14 @@ const Personalization = () => {
             excludeWithoutEmail: false,
             excludeWithoutPhone: false
           },
-          deletedLeadIds: new Set()
+          deletedLeadIds: new Set<string>()
         };
       }).sort((a, b) => {
-        // Nach Datum sortieren (neueste zuerst)
         const dateA = new Date(a.leads[0].created_at);
         const dateB = new Date(b.leads[0].created_at);
         return dateB.getTime() - dateA.getTime();
       });
+
       setLeadGroups(groups);
       toast({
         title: "Leads geladen",
@@ -851,6 +850,7 @@ const Personalization = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchLeads();
   }, []);
@@ -867,7 +867,6 @@ const Personalization = () => {
 
   // Anreicherungs-Service-Handler
   const handleEnrichmentAction = async (leadId: string, service: string) => {
-    const { webhookSettings } = useWebhookStorageLocal();
     const webhookUrl = webhookSettings.global_webhook_url;
     
     if (!webhookUrl) {
@@ -908,7 +907,9 @@ const Personalization = () => {
 
   // Gesamtstatistiken berechnen
   const totalStats = {
-    totalLeads: leadGroups.reduce((sum, group) => sum + group.leads.filter(l => !group.deletedLeadIds.has(l.id)).length, 0),
+    totalLeads: leadGroups.reduce((sum, group) => 
+      sum + group.leads.filter(l => !group.deletedLeadIds.has(l.id)).length, 0
+    ),
     totalWithEmail: leadGroups.reduce((sum, group) => {
       const visibleLeads = group.leads.filter(l => !group.deletedLeadIds.has(l.id));
       return sum + visibleLeads.filter(l => l.email || l.raw_scraped_data?.email).length;
@@ -916,7 +917,9 @@ const Personalization = () => {
     totalGroups: leadGroups.length,
     readyForPersonalization: leadGroups.reduce((sum, group) => sum + group.filteredLeads.length, 0)
   };
-  return <SidebarProvider>
+
+  return (
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
@@ -932,11 +935,9 @@ const Personalization = () => {
                 </p>
               </div>
 
-              {/* Globale Webhook URL */}
-              
-
               {/* Error Message */}
-              {errorMessage && <Card className="border-red-200 bg-red-50">
+              {errorMessage && (
+                <Card className="border-red-200 bg-red-50">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -949,7 +950,8 @@ const Personalization = () => {
                       </Button>
                     </div>
                   </CardContent>
-                </Card>}
+                </Card>
+              )}
 
               {/* Gesamtstatistiken */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -1104,6 +1106,8 @@ const Personalization = () => {
           </main>
         </div>
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default Personalization;

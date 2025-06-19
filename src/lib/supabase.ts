@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 // Self-hosted Supabase configuration - Direct service connections (no Kong)
@@ -7,8 +8,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 // Direct Supabase services configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Use direct auth service URL
-    url: 'http://217.154.225.184:3004',
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
